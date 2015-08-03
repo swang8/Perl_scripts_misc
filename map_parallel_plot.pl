@@ -8,9 +8,9 @@ use IO::File;
 
 my @files;  ## each file contains "marker  postion" pairs, the order of files will determine the order of parallel plots.
 my @link_files;
-my $output_prefix;
-# each file contains markers that are linked(shared) between two files, 
+# each link file contains markers that are linked(shared) between two files, 
 # assuming the first link_file is for linking file_1 and file_2; the second would be for linking file_2 and file_3 ...
+my $output_prefix;
 
 GetOptions(
   "files=s{1,}" => \@files,
