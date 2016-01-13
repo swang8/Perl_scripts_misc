@@ -45,6 +45,7 @@ sub read_snp_file
 	{
 		chomp; 
 		next if /^\s+$/;
+		next if /^\#/;
 		s/^>//;
 		my @t=split /\s+/,$_;
 		push @{$return{$t[0]}}, $t[1];
