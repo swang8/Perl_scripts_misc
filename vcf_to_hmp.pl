@@ -17,8 +17,8 @@ while(<IN>){
 	next if /\#/;
 	my @gn;
 	map{
-	  if(/0\|0/){push @gn, $t[3]}
-	  elsif(/1\|1/){push @gn, $t[4]}
+	  if(/0[\|\/]0/){push @gn, $t[3]}
+	  elsif(/1[\|\/]1/){push @gn, $t[4]}
 	  else{push @gn, "N"}
 	}@t[9..$#t]; 
 

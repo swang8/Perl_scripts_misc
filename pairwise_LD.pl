@@ -54,15 +54,15 @@ sub read_genotype_file
 			{
 				$code = 4;
 			}
-			elsif ($t[$_] == 0 or $t[$_] eq 'A')
+			elsif (($t[$_]=~/\d/ and $t[$_] == 0) or $t[$_] eq 'A')
 			{
 				$code = 1 
 			}
-			elsif($t[$_] == 1 or $t[$_] eq 'H')
+			elsif(($t[$_]=~/\d/ and $t[$_] == 1) or $t[$_] eq 'H')
 			{
 				$code = 3
 			}
-			elsif($t[$_] == 2 or $t[$_] eq 'B')
+			elsif(($t[$_]=~/\d/ and $t[$_] == 2) or $t[$_] eq 'B')
 			{
 				$code = 2
 			}

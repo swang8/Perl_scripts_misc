@@ -152,7 +152,7 @@ sub print_time_comment
 sub readfq 
 {
 	my ($fh, $aux) = @_;
-	@$aux = [undef, 0] if (!defined(@$aux));
+	@$aux = [undef, 0] if (!(@$aux));
 	return if ($aux->[1]);
 	if (!defined($aux->[0])) {
 		while (<$fh>) {
