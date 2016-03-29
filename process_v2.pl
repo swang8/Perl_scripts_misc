@@ -1,6 +1,7 @@
 #!/usr/bin/perl -w
 use strict;
 use File::Basename;
+use File::Copy;
 use Getopt::Long;
 use lib '/homes/wangsc/perl_lib';
 use Parallel::ForkManager;
@@ -109,28 +110,64 @@ my @subroutines = (
 );
 
 ## start
-foreach my $step (0 .. $#subroutines){
+my $step = 0;
+my %step_failed = ();
+while ($step <= $#subroutines){
 	print_time_stamp("Running " . $subroutines[$step]->{"name"} .", step " . ($step+1) ." of " . (scalar @subroutines));
-        unless($step > $latest_step){print_time_stamp($subroutines[$step]->{"name"} . " is done!"); next}
+        unless($step > $latest_step){print_time_stamp($subroutines[$step]->{"name"} . " is done!"); $step++; next}
 	my $input = $proc_files[$step];
+	&index_bam_files($input) if $input =~ /bam$/;
 	my $output = $proc_files[$step+1];
 	#unless (simple_check($output) eq "FAIL"){print $PROC $step, "\n"; next}
 	my $func = $subroutines[$step]->{"func"};
 	$func->($input);
 	sleep(60); # sleep 60 seconds
-	rerun_if_need($output, $input, $func);
-	print_time_stamp("Step " . $subroutines[$step]->{"name"} . " is done!");
-        print $PROC $step, "\n";  # output to the processing log file.
+	if(rerun_if_need($output, $input, $func)){
+	  $step_failed{$step} = 0 unless exists $step_failed{$step};
+	  $step_failed{$step}++;
+	  if($step_failed{$step} > 1){die "Step " . $subroutines[$step]->{"name"} . " failed more then once !\n"}
+	  $latest_step--;
+	  $step--;
+	  if($step < 0){die "Sam to Bam failed!! Please check the SAM file: $sam_file !\n"}
+	  next;
+	}
+	else{
+	  print_time_stamp("Step " . $subroutines[$step]->{"name"} . " is done!");
+          print $PROC $step, "\n";  # output to the processing log file.
+	  $step++;
+	}
 }
 &get_stat($bam_file);  # get the alignment stats
 simple_check($qc_bam); # check the final bam file;
+&index_bam_files($qc_bam);
 ## finished
 print_time_stamp("Finished all processing steps for accession $accession_name");
-&index_bam_files(@proc_files[4..6] );
 close $PROC;
 
 
 ## Subroutines
+sub clean_sorted_bam {
+  my $bam = shift;
+  print_time_stamp("\tStart cleaning the bam file $bam!");
+  my $tmp="/tmp/" . basename($bam) . ".tmp" . time();
+  open(my $IN, "$samtools_bin view -h $bam |") or die $!;
+  open(my $OUT, "|$samtools_bin view -Sb - >$tmp") or die $!;
+  my %pre=();
+  while(<$IN>){
+    next if /null/i;
+    if(/^\@/){print $OUT $_; next}
+    my @t = split /\s+/, $_;
+    my $id = join(" ", @t[0,1]);
+    next if exists $pre{$id};
+    $pre{$id}=1;
+    print $OUT $_;
+  }
+  close $IN;
+  close $OUT;
+  die "Cleaning $bam failed!\n" unless move($tmp, $bam);  
+  print_time_stamp("\tFinished cleaning the bam file $bam!");
+}
+
 
 sub get_latest_step {
   my $file = shift;
@@ -150,11 +187,11 @@ sub rerun_if_need {
   my $bam = shift;
   my $f_for_func = shift;
   my $func = shift;
-  my $retry = 1;
+  my $retry = 0;
   while(simple_check($bam) eq "FAIL"){
     $retry++;
+    return 1 if $retry > 1;
     print_time_stamp("\tRetrying to generate $bam");
-    die "Create $bam FAILED!\n" if $retry > 3;
     $func->($f_for_func);
   }
   return 0;
@@ -236,7 +273,7 @@ sub samTobam
 	$bam=~s/sam$/bam/;
 	print_time_stamp("Convert SAM to BAM");
 	my $cmd = "$samtools_bin  view -Shb $file  >$bam";
-	die "$cmd failed !\n" if system($cmd);
+	print STDERR  "$cmd failed !\n" if system($cmd);
 	return $bam;
  }
 
@@ -246,12 +283,14 @@ sub picard_duplicate_marking
 	my @picard_cmds;
 	my @rmdup_bams;
 	map{
-		print_time_stamp("\tStart removing duplicates in bam file $_ ......");
-		my $merics_file = $_ . ".metrics";
-		my $out = dirname($_) . "/" . basename($_, ".bam") . "_rmDup.bam";
+		my $bam = $_;
+		print_time_stamp("\tStart removing duplicates in bam file $bam ......");
+		&clean_sorted_bam($bam);
+		my $merics_file = $bam . ".metrics";
+		my $out = dirname($bam) . "/" . basename($bam, ".bam") . "_rmDup.bam";
 		push @rmdup_bams, $out;
-		my $cmd = "java -Xmx10G -jar $picard_dir/MarkDuplicates.jar I=$_ O=$out M=$merics_file REMOVE_DUPLICATES=true AS=true";
-		die "$cmd failed \n" if system($cmd);
+		my $cmd = "java -Xmx10G -jar $picard_dir/MarkDuplicates.jar I=$bam O=$out M=$merics_file REMOVE_DUPLICATES=true AS=true";
+		print "$cmd failed \n" if system($cmd);
 	}@bams;
 }
 
@@ -278,7 +317,7 @@ sub GATK_realignment
 		my $interval = $_ . ".intervals";
 		push @intervals, $interval;
 		my $cmd = "java -Xmx10G -jar $GATK_jar -I $_ -R $ref_fasta -T RealignerTargetCreator -o $interval";
-		die "$cmd failed\n" if system($cmd);
+		print  "$cmd failed\n" if system($cmd);
 		push @generate_interval_cmds, $cmd;
 	}@sorted_bams;
 		
@@ -290,7 +329,7 @@ sub GATK_realignment
 		my $realn_bam = dirname($_) . "/" . basename($_, ".bam") . "_realigned.bam";
 		push @realigned_bams, $realn_bam;
 		my $cmd = "java -Xmx10G -jar $GATK_jar -I $_ -R $ref_fasta -T IndelRealigner -targetIntervals $interval -o $realn_bam";
-		die "$cmd failed\n" if system($cmd);
+		print  "$cmd failed\n" if system($cmd);
 		push @realign_cmds, $cmd;
 	} @sorted_bams;
 
