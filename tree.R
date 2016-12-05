@@ -1,0 +1,6 @@
+library("ape")
+data <- read.table("~/combined_all_grps_genotyping_recoded_OnlySNPsCoveredByAllgrp_Numeric_renameDup.csv", header=T, sep=",")
+data <- t(data)
+dis <- dist(data)
+tree <- nj(dis)
+write.tree(tree, "~/divers_tree.phy")
