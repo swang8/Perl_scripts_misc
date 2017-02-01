@@ -17,7 +17,8 @@ foreach my $vcf_file (@vcf_files){
       my $index = search($coord_hash{$chr}, $pos);
       my ($contig, $start, $end) = @{$coord_hash{$chr}[$index]};
       my $newpos = $pos - $start +  1;
-      print join("\t", (@t[0,1], $contig, $newpos)), "\n";
+      print STDERR join("\t", (@t[0,1], $contig, $newpos)), "\n";
+      print join("\t", ($contig, $newpos), @t[2..$#t]), "\n";
       #print STDERR join("\t", (@t[0,1], $contig, $newpos)), "\n";
   }
   close IN;

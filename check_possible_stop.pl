@@ -1,5 +1,6 @@
 #!/usr/bin/perl
 use strict;
+use lib "/home/shichen.wang/perl5/lib/perl5";
 use Bio::DB::Fasta;
 
 my ($ref, $var_file) = @ARGV;

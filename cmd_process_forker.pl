@@ -50,8 +50,9 @@ main: {
 	my @failed_jobs;
 	
 	my $num_running = 0;
-	
-	open (my $fh, $cmds_file) or die "Error, cannot open file $cmds_file";
+	my $fh;
+        if ($cmds_file eq "" or $cmds_file eq "-"){$fh = *STDIN}
+	else{open ( $fh, $cmds_file) or die "Error, cannot open file $cmds_file";}
 	my $cmd_counter = 0;
 	while (my $cmd = <$fh>) {
 		
