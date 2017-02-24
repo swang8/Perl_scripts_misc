@@ -15,7 +15,7 @@ while(<IN>){
 	}
 	my %allele_cnt;
 	map{
-		unless(/N/){
+		unless(/N|H/){
 		  my @p = split //, $_;
 		  map{$allele_cnt{$_}++ }@p;
 		}
@@ -23,7 +23,7 @@ while(<IN>){
 	my @alleles = sort {$allele_cnt{$b} <=> $allele_cnt{$a}} keys %allele_cnt;
 	next unless @alleles == 2;
 	my @geno = ();
-	map{if(/N/){push @geno, "./."}elsif(/$alleles[0]/){push @geno, "0/0:1,0,0"}elsif(/$alleles[1]/){push @geno, "1/1:0,0,1"}else{push @geno, "0/1:1,1,0"} }@t[11..$#t];
+	map{if(/N/){push @geno, "./."}elsif(/$alleles[0]/){push @geno, "0/0:1,0,0"}elsif(/$alleles[1]/){push @geno, "1/1:0,0,1"}elsif(/H/){push @geno, "0/1:0,1,0"}else{push @geno, "0/1:1,1,0"} }@t[11..$#t];
 	$t[3] = 1 if $t[3] <= 0;
 	$t[3] = int($t[3] * 100000);
 	##print join("\t", @t[2,3,0], @alleles, ".", ".", ".", "GT:PL", @geno), "\n";

@@ -28,7 +28,12 @@ while(<IN>){
 	}
 	push @pos, join("\t", $t[2], $t[0], 0, $t[3]);	
 	map{
-		push @{$res{$arr[$_]}}, join(" ", @t[$_, $_]);	
+		if(length $t[$_] == 1) {
+			push @{$res{$arr[$_]}}, join(" ", @t[$_, $_]);
+		}
+		else{
+			push @{$res{$arr[$_]}}, join(" ", (split //, $t[$_]));
+		}
 	}11..$#t; 
 }
 close IN;
