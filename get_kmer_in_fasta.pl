@@ -8,6 +8,8 @@ use Statistics::Descriptive;
 die "perl $0 <fasta (txt or zipped)> <kmer_size>\n" unless @ARGV == 2;
 my ($fasta_file, $ksize) = @ARGV;
 
+my $max_threads = 10;
+
 my $time = localtime(time);
 print STDERR $time, "\t", "Starting ...\n";
 if ($fasta_file =~ /gz$/){
@@ -22,18 +24,26 @@ if ($fasta_file =~ /gz$/){
 ## get the fasta file
 my $fasta = Bio::DB::Fasta->new($fasta_file);
 my @ids = $fasta->get_all_primary_ids;
-my $max_threads = 10;
-
+@ids = grep{!/\D/}@ios;
 my $pm = Parallel::ForkManager->new($max_threads);
 
+my @pos_files;
+
 foreach my $id (sort{$a cmp $b} @ids){
+  my $out = $fasta_file . "_" . $id . "_${ksize}mer_pos.txt";
+  push @pos_files , $out;
   my $pid = $pm->start and next;
   my $t = localtime(time);
   print STDERR $t , "\t", "Processing $id ...\n";
-  &get_kmer_positions($fasta_file, $fasta, $id, $ksize);
+  &get_kmer_positions($fasta_file, $fasta, $id, $ksize, $out);
   $pm->finish;
 }
 $pm->wait_all_children;
+
+# combine the output
+my $combine = "cat " . join(" ", @pos_files) . " > " . $fasta_file . "_${ksize}mer_pos.txt";
+die if system($combine);
+map{unlink($_)}@pos_files;
 $time = localtime(time);
 print STDERR  $time ,"\t", "Done!!!\n";
 ##
@@ -56,10 +66,9 @@ sub kmer_generator {
 }
 
 sub get_kmer_positions {
-  my ($fasta_file, $db, $id, $k) = @_;
+  my ($fasta_file, $db, $id, $k, $out) = @_;
   my $seq_len = $db->length($id);
   my $kmer_p = {};
-  my $out = $fasta_file . "_${k}mer_pos.txt";
   open (my $O, ">$out") or die $!; 
   for (my $i = 0; $i <= ($seq_len - $k); $i++){
     my $subseq = $db->seq($id, $i => ($i+$k-1));

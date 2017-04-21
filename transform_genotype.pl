@@ -6,7 +6,7 @@ my $file = shift or die "perl $0 genotype_file\n";
 open (IN, $file) or die;
 while(<IN>)
 {
-	if(/^SNP/){ print $_;	next}
+	if(/^SNP|rs|ID/){ print $_;	next}
 	chomp;
 	my @transformed_data = transform($_);
 	print join("\t", @transformed_data),"\n" if @transformed_data;
@@ -17,7 +17,7 @@ sub transform
 {
 	my $line = shift;
 	#print STDERR $line, "\n";
-	my @data = split /\t/, $line;
+	my @data = split /\t|\,/, $line;
 	my $snp_id = shift @data;
 	my %geno_count;
 	map{$geno_count{$_}++}@data;
