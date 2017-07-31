@@ -22,6 +22,7 @@ my $sUsage = qq(
 	-out_prefix         output prefix for variation file
 	-region             specific region for variation calling, chr_1:12345-876812
 	-bam                processed bam files: 1.bam 2.bam 3.bam
+    -dcov               mean coverage, default 200
 	-help               print this message
 	
 	example:
@@ -38,9 +39,9 @@ die $sUsage unless @ARGV;
 my $samtools_bin = "/homes/bioinfo/bioinfo_software/samtools/samtools ";
 #my $samtools_bin = "samtools ";
 my $picard_dir  = "/homes/wangsc/Tools/picard";
-my $GATK_jar = "/homes/wangsc/Tools/GenomeAnalysisTK-2.2-8-gec077cd/GenomeAnalysisTK.jar ";
+my $GATK_jar = "/home/shichen.wang/Tools/GenomeAnalysisTK-2.2-8-gec077cd/GenomeAnalysisTK.jar ";
 
-my ($ref_fasta, $out_prefix, $region, $MAX_THREADS, @bam_files, $help);
+my ($ref_fasta, $out_prefix, $region, $MAX_THREADS, @bam_files, $dcov, $help);
 $MAX_THREADS = 1;
 my $TMP;
 GetOptions(
@@ -49,10 +50,12 @@ GetOptions(
 'region=s'     =>	\$region,
 'out_prefix=s' => \$out_prefix,
 'tmp=s'        => \$TMP,
+'dcov=i'        => \$dcov,
 'bam=s{1,}'    =>	\@bam_files,
 'help'         =>	sub{help()}
 );
 
+$dcov = 200 unless $dcov;
 
 die $sUsage unless (defined $ref_fasta and defined $out_prefix and (@bam_files >=1) );
 
@@ -152,7 +155,7 @@ sub variation_calling_unifiedgenotyper
         my @params = map{"-I ".$_} @recal_bams;
         my $out = $out_prefix . "_raw.snps.indels.vcf";
         #my $cmd = "java -Xmx10G -Djava.io.tmpdir=/homes/wangsc/tmp  -jar $GATK_jar -T UnifiedGenotyper -R $ref_fasta ". join(" ", @params) . " --genotype_likelihoods_model BOTH " . (defined $region?"-L $region ":" ") . "-dcov 200 -o $out";
-        my $cmd = "java -Xmx30G  -jar $GATK_jar -T UnifiedGenotyper -R $ref_fasta ". join(" ", @params) . " --genotype_likelihoods_model BOTH " . (defined $region?"-L $region ":" ") . "-dcov 200 -o $out";
+        my $cmd = "java -Xmx30G  -jar $GATK_jar -T UnifiedGenotyper -R $ref_fasta ". join(" ", @params) . " --genotype_likelihoods_model BOTH " . (defined $region?"-L $region ":" ") . "-dcov $dcov -o $out";
   	die "!!! $cmd failed\n" if system($cmd);
 
 	return $out;

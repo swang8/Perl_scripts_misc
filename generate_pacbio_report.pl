@@ -4,6 +4,7 @@ use File::Basename;
 use lib '/home/shichen.wang/perl5/lib/perl5';
 use JSON::Parse 'json_file_to_perl';
 use Data::Dumper;
+use Cwd;
 
 my $star_bar = '*' x 80;
 my $usage =  qq ($star_bar
@@ -27,6 +28,7 @@ $star_bar
 
 my $dir = shift or die $usage;
 $dir =~ s/\/$//;
+#$dir = Cwd::abs_path($dir);
 
 my @selected_cells = @ARGV;
 print STDERR "Selected cells: ", @selected_cells >0?join(" ", @selected_cells):"None, will take all detected.", "\n";
@@ -50,7 +52,8 @@ mkdir($output_dir) unless -d $output_dir;
 my $zip = basename($dir) . "_" . join("-", (map{basename($_)}@cells)) . ".tar";
 my $zip_dir = $output_dir . "/" . random_str();
 mkdir ($zip_dir) unless -d $zip_dir;
-my $zip_cmd = "tar --exclude=\".*\" --exclude=\"*scraps.*\"  -cvf  $zip_dir/$zip -C $dir " . join(" ", (map{basename($_)}@cells));# print STDERR $zip_cmd, "\n";
+#my $zip_cmd = "tar --exclude=\".*\" --exclude=\"*scraps.*\"  -cvf  $zip_dir/$zip -C $dir " . join(" ", (map{basename($_)}@cells));# print STDERR $zip_cmd, "\n";
+my $zip_cmd = "tar  -cvf  $zip_dir/$zip -C $dir " . join(" ", (map{basename($_)}@cells));# print STDERR $zip_cmd, "\n";
 print STDERR $zip_cmd, "\n";
 die if system($zip_cmd);
 $zip = basename($zip_dir) . "/" . $zip;
