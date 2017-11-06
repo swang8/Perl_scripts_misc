@@ -62,7 +62,7 @@ sub get_file_handles
 	{
 		my $file = $acc_id . '.fastq';
 		local *FH;
-		open (FH, ">$file") or die "can't open file $file\n";
+		open (FH, ">>$file") or die "can't open file $file\n";
 		$return_hash{$acc_id} = *FH{IO};
 	}
 	return %return_hash;
@@ -94,6 +94,7 @@ sub seperate_barcodes
 				#$qual =~ s/^.{$code_length}//;
 				substr($qual, 0, $code_length) = '';
 			}
+            $seq = substr($seq, 0, length($qual));
 			print {$fhs_ref->{$barcode_ref->{$barcode}}} join("\n", ($name, $seq, '+', $qual)),"\n" if (length $seq) >= 30;
 		}
 		
@@ -184,10 +185,10 @@ sub readfq
 	while (<$fh>) {
 			chomp;
 			$qual .= $_;
-			if (length($qual) >= length($seq)) {
-			$aux->[0] = undef;
-			return ($name, $seq, $qual);
-		}
+			#if (length($qual) >= length($seq)) {
+			    $aux->[0] = undef;
+			    return ($name, $seq, $qual);
+		    #}
 	}
 	$aux->[1] = 1;
 	return ($name, $seq);
