@@ -19,7 +19,7 @@ while(<IN>){
 	map{
 	  if(/0[\|\/]0/){push @gn, $t[3]}
 	  elsif(/1[\|\/]1/){push @gn, $t[4]}
-	  else{push @gn, "N"}
+	  else{push @gn, "-"}
 	}@t[9..$#t]; 
 
 	print join("\t", ($t[2], join("/", @t[3,4]), @t[0,1], "NA", "NA", "NA", "NA", "NA", "NA", "NA", @gn)), "\n";

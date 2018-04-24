@@ -4,6 +4,7 @@ use File::Basename;
 use lib '/home/shichen.wang/perl5/lib/perl5';
 use JSON::Parse 'json_file_to_perl';
 use Data::Dumper;
+use Cwd;
 
 my $star_bar = '*' x 80;
 my $usage =  qq ($star_bar
@@ -27,6 +28,7 @@ $star_bar
 
 my $dir = shift or die $usage;
 $dir =~ s/\/$//;
+#$dir = Cwd::abs_path($dir);
 
 my @selected_cells = @ARGV;
 print STDERR "Selected cells: ", @selected_cells >0?join(" ", @selected_cells):"None, will take all detected.", "\n";
@@ -50,7 +52,8 @@ mkdir($output_dir) unless -d $output_dir;
 my $zip = basename($dir) . "_" . join("-", (map{basename($_)}@cells)) . ".tar";
 my $zip_dir = $output_dir . "/" . random_str();
 mkdir ($zip_dir) unless -d $zip_dir;
-my $zip_cmd = "tar cvf  $zip_dir/$zip -C $dir " . join(" ", (map{basename($_)}@cells));# print STDERR $zip_cmd, "\n";
+#my $zip_cmd = "tar --exclude=\".*\" --exclude=\"*scraps.*\"  -cvf  $zip_dir/$zip -C $dir " . join(" ", (map{basename($_)}@cells));# print STDERR $zip_cmd, "\n";
+my $zip_cmd = "tar  -cvf  $zip_dir/$zip -C $dir " . join(" ", (map{basename($_)}@cells));# print STDERR $zip_cmd, "\n";
 print STDERR $zip_cmd, "\n";
 die if system($zip_cmd);
 $zip = basename($zip_dir) . "/" . $zip;
@@ -66,13 +69,20 @@ foreach my $cell (@cells) {
   next unless @files;
   my $subread_bam = (<$cell/*subread*bam>)[0];
   my $metadata_xml; map{$metadata_xml = $_ if /run.metadata/}@files;
-  my $r = `cat $metadata_xml`; 
-  my ($run_start, $stamp_name, $run_id) = $r=~/pbdm:Run Status=.*WhenStarted="(\S+)".*TimeStampedName="(\S+)".*Name="(\S+)"/;
-  unless($header_printed){print_header($HTML, $run_start, $stamp_name, $run_id); $header_printed = 1}
+  #my $r = `cat $metadata_xml`; 
+  #my ($run_start, $stamp_name, $run_id) = $r=~/pbdm:Run Status=.*WhenStarted="(\S+)".*TimeStampedName="(\S+)".*Name="(\S+)"/;
+  #unless($header_printed){print_header($HTML, $run_start, $stamp_name, $run_id); $header_printed = 1}
   
   my $subset_xml; map{$subset_xml = $_ if /subreadset/}@files;
   my $analysis_dir; map{print STDERR "\t", $_, "\n"; $analysis_dir = $_ if $analysis_dir_properties{$_}->[1] eq $subset_xml}keys %analysis_dir_properties;
   
+  my $pbscala_stdout = $analysis_dir . "/pbscala-job.stdout";
+  my $r = `cat $pbscala_stdout`;
+  my $info_str = $1 if $r =~/Successfully entered SubreadSet SubreadServiceDataSet\((.*)\)/;
+  my @info_arr = split /,/, $info_str;
+  my ($run_start, $stamp_name, $lib_name, $cell_name, $run_id) = @info_arr[4, 13..15,18];
+  unless($header_printed){print_header($HTML, $run_start, $stamp_name, $lib_name, $run_id); $header_printed = 1}
+
   my $polymerase_plot = $analysis_dir . "/dataset-reports/filter_stats_xml/readLenDist0.png";
   my $insert_plot = $analysis_dir . "/dataset-reports/filter_stats_xml/insertLenDist0.png";
   mkdir( "$output_dir/" . basename($cell)) unless -d "$output_dir/" . basename($cell);
@@ -166,7 +176,8 @@ close DONE;
 sub get_stats_from_bam {
   my $bam = shift or die;
   print STDERR "Bam file: $bam \n";
-  my $samtools = '/home/shichen.wang/Tools/bin/samtools';
+  my $samtools =  `which samtools`   || '/home/shichen.wang/Tools/bin/samtools';
+  chomp $samtools;
   print STDERR "$samtools view $bam\n";
   open (my $IN, "$samtools view $bam |" ) or die $!;
   my @regions; my $total_length = 0; my $read_mean = 0; my $read_count = 0;
@@ -209,7 +220,7 @@ sub get_properties {
 
 sub print_header {
   my $fh = shift;
-  my ($run_start, $stamp_name, $run_id) = @_;
+  my ($run_start, $stamp_name, $lib_name, $run_id) = @_;
   print {$fh} qq(
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
     "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
@@ -244,6 +255,7 @@ function dl_cmd(file) {
 </div>
 <ul id="properties">
 	<li>Run number: $run_id</li>
+	<li>Library: $lib_name</li>
 	<li>TimeStampName: $stamp_name</li>
 	<li>Date: $run_start</li>
 	<li>Sequencer ID: 54092</li>

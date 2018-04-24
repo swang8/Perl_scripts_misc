@@ -15,6 +15,7 @@ while(<IN>){
 	       next;
 	}
 	next if /\#/;
+    next if length $t[3]>1 or length $t[4]>1;
 	my @gn;
 	map{
 	  if(/0[\|\/]0/){push @gn, $t[3].$t[3]}
