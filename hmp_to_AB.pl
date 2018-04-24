@@ -38,6 +38,8 @@ sub recode {
   if (@pa_uniq > 0 and @pb_uniq > 0) {
     $return{join("", @pa_uniq[0,0])}="A";
     $return{join("", @pb_uniq[0,0])}="B";
+    $return{join("", $pa_uniq[0], $pb_uniq[0])} = "H";
+    $return{join("", $pb_uniq[0], $pa_uniq[0])} = "H";
   }
   elsif (@pa_uniq){
     my $alt = alternative($pa_uniq[0], [keys %pa_allele, keys %pb_allele]);
@@ -45,6 +47,8 @@ sub recode {
     $return{join("", $pa_uniq[0], $alt)}="A";
     $return{join("", $alt, $pa_uniq[0])}="A";
     $return{join("", $alt, $alt)}="B";
+    $return{join("", $alt, $pa_uniq[0])} = "H";
+    $return{join("", $pa_uniq[0], $alt)} = "H";
   }
   elsif (@pb_uniq){
     my $alt = alternative($pb_uniq[0], [keys %pa_allele, keys %pb_allele]);
@@ -52,6 +56,8 @@ sub recode {
     $return{join("", $pb_uniq[0], $alt)}="B";
     $return{join("", $alt, $pb_uniq[0])}="B";
     $return{join("", $alt, $alt)}="A";
+    $return{join("", $alt, $pb_uniq[0])} = "H";
+    $return{join("", $pb_uniq[0], $alt)} = "H";
   }
   else{}
   return %return;

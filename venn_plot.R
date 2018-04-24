@@ -20,7 +20,7 @@ library(VennDiagram)
 # input:  csv file with header
 opts = commandArgs(trailingOnly = T)
 #csv_file = opts[1]
-csv_file="~/Downloads/R_table_three_pedigree_position.csv"
+csv_file="http://download.txgen.tamu.edu/eric.gomez/cufflinks/significant_deg_matrix.csv"
 print(paste("input", csv_file, sep=": "))
 
 dat = read.csv(csv_file)
@@ -35,7 +35,7 @@ overlap <- function (d) {
       count = count + 1
     }
   }
-  print(paste("count:", count))
+  # print(paste("count:", count))
   return(count)
 }
 
