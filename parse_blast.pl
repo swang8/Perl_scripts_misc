@@ -1,6 +1,5 @@
 #!/usr/bin/perl -w
 use strict;
-use lib '/home/shichen.wang/perl5/lib/perl5';
 use Bio::SearchIO;
 
 die "perl $0 <blast_file>\n" unless @ARGV;
@@ -23,7 +22,7 @@ sub parse_blastx_results
 			$flag = 1;
 			my $hsp = $hit->next_hsp();
 			next unless defined $hsp;
-			print $query_name, "\t",$hit->name,"\t",$hit->description,"\t", $hit->significance,"\t", $result->query_length, "\t", $hsp->length('hit'), "\t", join("-", $hsp->range('query')),"\t", join("-", $hsp->range('hit')),"\t", $hsp->percent_identity , "%\n";
+			print $query_name, "\t",$hit->name,"\t",$hit->description,"\t", $hit->significance,"\t", $result->query_length, "\t", $hsp->length('hit'), "\t", $hsp->percent_identity , "%\n";
 			#last if $flag;
 		}
 	#	print "\n";

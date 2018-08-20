@@ -1,0 +1,4 @@
+perl -ne 'BEGIN{@gp_cutoff=map{$_/10}1..10} chomp;@t=split /\s+/,$_; $m=join("->",@t[2,3]); push @arr, [$t[1], $m]; END{ foreach $cut(@gp_cutoff){ %h=(); map{@p=@$_; $h{$p[1]}++ if $p[0]>=$cut }@arr; map{print join("\t", $cut, $_, $h{$_}),"\n" }sort{$h{$b} <=> $h{$a}}keys %h;   }  }' $1 >${1}.sum.txt
+
+perl -ne 'BEGIN{@types=qw(0/0->0/0    1/1->1/1    0/1->0/1    1/1->0/0    1/1->0/1    0/0->1/1    0/0->0/1    0/1->0/0    0/1->1/1 Other); %ht=map{$_, 1}@types;  } chomp; @t=split /\s+/,$_; $tp=exists $ht{$t[1]}?$t[1]:"Other"; $ht_count{$t[0]}{$tp}+=$t[2]; END{print join(",", @types, qw(Total    Correct    Accuracy)),"\n"; foreach $gp(sort{$a <=> $b}keys %ht_count){$tot=0;map{$tot += $ht_count{$gp}{$_}}@types; $correct=0; map{$correct+=$ht_count{$gp}{$_} }qw(0/0->0/0    1/1->1/1    0/1->0/1); $accuracy=$correct/$tot; print join(",", $gp, @{$ht_count{$gp}}{@types}, $tot, $correct, $accuracy ),"\n"  }  }' ${1}.sum.txt >${1}.sum.table.csv
+
