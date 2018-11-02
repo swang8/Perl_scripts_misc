@@ -6,6 +6,7 @@ use JSON::Parse 'json_file_to_perl';
 use XML::Simple;
 use Data::Dumper;
 use Cwd;
+use FindBin;
 
 my $star_bar = '*' x 80;
 my $usage =  qq ($star_bar
@@ -19,6 +20,9 @@ Examples:
 
 * To generate report for certain cell(s) of the run:
   $0 /data4/pacbio/r54092_20160921_211039 1_A01 2_B02
+
+* To run BLAST
+RUNBLAST=1 $0 /data4/pacbio/r54092_20160921_211039 1_A01 2_B02
 
 The output will be gereated in the working directory while the perl script is running, with the folder named as RUN_NAME-Cell1-Cell2, i.e., r54092_20160921_211039-1_A01-2_B02. This folder may be copyed to the PI's downloadable folder.
 
@@ -59,7 +63,19 @@ print STDERR $zip_cmd, "\n";
 die if system($zip_cmd);
 $zip = basename($zip_dir) . "/" . $zip;
 
-
+# run blast
+if (exists $ENV{RUNBLAST}){
+    foreach my $cell (@cells){
+        my @bams = <$cell/*subreads.bam>;
+        foreach my $bam (@bams){
+            my $blast_output = $output_dir . "/" . basename($cell) . ".blast.out";
+            my $blast_sum = $output_dir . "/" . basename($cell) . ".blast.sum.txt";
+            my $cmd = "bamToFastq -i $bam -fq /dev/stdout | head -n 10000 |seqtk seq -A |blastn -db nt -num_threds 10 -outfmt \'6 qseqid stitle qcovs \' >$blast_output";
+            system($cmd);
+            `sh $FindBin::Bin/../lib/summarize_blast.sh $blast_output >$blast_sum`;
+        }
+    }
+}
 my $output_html = $output_dir . "/index.html";
 open (my $HTML, ">$output_html") or die "$output_html error!";
 my $header_printed = 0;

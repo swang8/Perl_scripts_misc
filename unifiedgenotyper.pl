@@ -1,6 +1,7 @@
 #!/usr/bin/perl -w
 use strict;
-use lib '/homes/wangsc/perl_lib'; # for beocat;
+#use lib '/homes/wangsc/perl_lib'; # for beocat;
+use lib '/home/wangsc/perl5/lib/perl5';
 use Parallel::ForkManager;
 use File::Basename;
 use Getopt::Long;
@@ -21,8 +22,9 @@ my $sUsage = qq(
 	-ref                reference fasta file
 	-out_prefix         output prefix for variation file
 	-region             specific region for variation calling, chr_1:12345-876812
+	-dcov               mean coverage, default: 200
 	-bam                processed bam files: 1.bam 2.bam 3.bam
-    -dcov               mean coverage, default 200
+        -params		    Other parameters for GATK, such as "--output_mode EMIT_ALL_SITES"
 	-help               print this message
 	
 	example:
@@ -36,12 +38,16 @@ my $sUsage = qq(
 die $sUsage unless @ARGV;
 
 # predefined 
-my $samtools_bin = "/homes/bioinfo/bioinfo_software/samtools/samtools ";
-#my $samtools_bin = "samtools ";
-my $picard_dir  = "/homes/wangsc/Tools/picard";
-my $GATK_jar = "/home/shichen.wang/Tools/GenomeAnalysisTK-2.2-8-gec077cd/GenomeAnalysisTK.jar ";
-
-my ($ref_fasta, $out_prefix, $region, $MAX_THREADS, @bam_files, $dcov, $help);
+#my $samtools_bin = "/homes/bioinfo/bioinfo_software/samtools/samtools ";
+my $bamutil = "/home/wangsc/Tools/bamUtil/bin/bam ";
+#check_exec($bamutil);
+my $samtools_bin = `module load SAMtools/0.1.19-intel-2015B; which samtools`;
+chomp $samtools_bin;
+#check_exec($samtools_bin);
+my $picard_dir  = "/software/easybuild/software/picard/1.56-Java-1.7.0_80/";
+##my $GATK_jar = "/home/wangsc/Tools/GenomeAnalysisTK-2.2-8-gec077cd/GenomeAnalysisTK.jar ";
+my $GATK_jar = "/home/wangsc//Tools/GATK_3.5/GenomeAnalysisTK.jar ";
+my ($ref_fasta, $out_prefix, $region, $MAX_THREADS, @bam_files, $help, $dcov, $gatk_params);
 $MAX_THREADS = 1;
 my $TMP;
 GetOptions(
@@ -52,12 +58,14 @@ GetOptions(
 'tmp=s'        => \$TMP,
 'dcov=i'        => \$dcov,
 'bam=s{1,}'    =>	\@bam_files,
+'params=s' => \$gatk_params,
 'help'         =>	sub{help()}
 );
 
-$dcov = 200 unless $dcov;
 
 die $sUsage unless (defined $ref_fasta and defined $out_prefix and (@bam_files >=1) );
+
+$dcov = 200 unless $dcov;
 
 #print join("\n", ($ref_fasta, $out_prefix, $MAX_THREADS, @bam_files)), "\n"; exit;
 
@@ -119,7 +127,7 @@ unless (-e $ref_fasta.".fai"){
 
 # SNP and Indel calling
 print_time_stamp("\tStart calling variations from bam files ......");
-my $raw_variation_vcf = variation_calling_unifiedgenotyper(@bam_files);
+my $raw_variation_vcf = variation_calling_unifiedgenotyper($gatk_params, @bam_files);
 print_time_stamp("\tFinish calling variations from bam files ......");
 
 # Variant Quality Score Recalibration, VQSR (not implmented yet)
@@ -143,7 +151,7 @@ sub variation_calling
 	my @recal_bams = @_;
 	my @params = map{"-I ".$_} @recal_bams;
 	my $out = $out_prefix . "_raw.snps.indels.vcf";
-	my $cmd = "java -jar $GATK_jar -T HaplotypeCaller -R $ref_fasta ". join(" ", @params) . " -o $out";
+	my $cmd = "java -jar $GATK_jar -T HaplotypeCaller -R $ref_fasta -nt 20 ". join(" ", @params) . " -o $out";
   	die "!!! $cmd failed\n" if system($cmd);
   
   	return $out;
@@ -151,11 +159,14 @@ sub variation_calling
 
 sub variation_calling_unifiedgenotyper
 {
+	my $gatk_params = shift;
         my @recal_bams = @_;
         my @params = map{"-I ".$_} @recal_bams;
         my $out = $out_prefix . "_raw.snps.indels.vcf";
         #my $cmd = "java -Xmx10G -Djava.io.tmpdir=/homes/wangsc/tmp  -jar $GATK_jar -T UnifiedGenotyper -R $ref_fasta ". join(" ", @params) . " --genotype_likelihoods_model BOTH " . (defined $region?"-L $region ":" ") . "-dcov 200 -o $out";
-        my $cmd = "java -Xmx30G  -jar $GATK_jar -T UnifiedGenotyper -R $ref_fasta ". join(" ", @params) . " --genotype_likelihoods_model BOTH " . (defined $region?"-L $region ":" ") . "-dcov $dcov -o $out";
+        my $cmd = "java -Xmx30G  -jar $GATK_jar -T UnifiedGenotyper -R $ref_fasta ". join(" ", @params) . " --genotype_likelihoods_model BOTH " . (defined $region?"-L $region ":" ") . "-dcov $dcov -o $out" . " -drf BadMate -drf DuplicateRead";
+        $cmd  = $cmd . " " .  $gatk_params if $gatk_params;
+
   	die "!!! $cmd failed\n" if system($cmd);
 
 	return $out;
@@ -241,7 +252,7 @@ sub GATK_realignment
 sub index_bam_files
 {
 	my @bam_files = @_;
-	my @index_cmds = map{$samtools_bin . "index " . $_;}@bam_files;
+	my @index_cmds = map{$samtools_bin . " index " . $_;}@bam_files;
 	run_parallel_jobs(\@index_cmds, $MAX_THREADS);
 	
 }

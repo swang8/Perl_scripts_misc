@@ -23,7 +23,8 @@ while(<IN>){
 	  elsif(/0[\|\/]1/){push @gn, $t[3].$t[4]}
 	  else{push @gn, "NN"}
 	}@t[9..$#t]; 
-        my $rs = $t[2]; $rs = join("_", @t[0,1]) if $rs eq ".";
+        #my $rs = $t[2]; 
+        my $rs = join("_", @t[0,1]) ;
 	print join("\t", ($rs, join("/", @t[3,4]), @t[0,1], "NA", "NA", "NA", "NA", "NA", "NA", "NA", @gn)), "\n";
 }
 close IN;
