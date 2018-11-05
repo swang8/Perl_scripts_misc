@@ -17,7 +17,7 @@ while(<IN>){
     if($t[$_] =~ /0\/0/){$fasta{$_} .= $t[3]}
     elsif($t[$_] =~ /1\/1/){$fasta{$_} .= $t[4]}
     elsif($t[$_] =~ /0\/1:(\d+)\,(\d+)/){ if($1>$2){$fasta{$_} .= $t[3]}else{$fasta{$_} .= $t[4]} }
-    else{$fasta{$_} .= $missing}
+    else{$fasta{$_} .= $t[3]} # use ref for missing data 
   }9..$#t;
 }
 close IN;
