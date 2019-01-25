@@ -1,6 +1,7 @@
 #!/usr/bin/perl -w
 use strict;
 use Getopt::Long;
+use File::Basename;
 
 my $fastq_file; 
 my $qc_pl;
@@ -28,7 +29,6 @@ perl $0
   -fq_list fastq_list.txt  # list of fastq files, first column is the accession name, second column is the full path to the fastq file (fastq or gzfastq);
   -numJobs  10             # how many jobs to be submitted to the HPC
   -jobName  myJob          # The name of job
-  -qc_pl    /home/$ENV{USER}/Tools/NGSQCToolkit_v2.3.3/QC/IlluQC.pl
   -aln_pl   /home/$ENV{USER}/pl_scripts/align.pl
   -call_pl  /home/$ENV{USER}/pl_scripts/unifiedgenotyper.pl
   -ref      /home/$ENV{USER}/scratch_fast/ref_data/Dgenome/Dgenome.fa
@@ -66,11 +66,19 @@ my @params;
 foreach my $f (@arr) {
   my $f2=$f; 
   $f2=~s/R1/R2/; 
+  my $folder = dirname($f);
+  my $qc_folder = $folder . "/QC";
+  my $acc = $h{$f};
+  mkdir $qc_folder unless -d $qc_folder;
   if(exists $h{$f2}) {
-    push @params, "-pe $f $f2 2 5";
+    #push @params, "-pe $f $f2 2 5";
+    my $cmd="java -jar \$EBROOTTRIMMOMATIC/trimmomatic-0.38.jar PE -threads 4 $f $f2 $qc_folder/${acc}_F.fq.gz  $qc_folder/${acc}_FU.fq.gz $qc_folder/${acc}_R.fq.gz $qc_folder/${acc}_RU.fq.gz ILLUMINACLIP:\$EBROOTTRIMMOMATIC/adapters/TruSeq3-PE.fa:2:30:10 LEADING:3 TRAILING:3 SLIDINGWINDOW:4:15 MINLEN:36";
+    push @params, $cmd;
   }
   else{
-    push @params, "-se $f 1 5"
+    #push @params, "-se $f 1 5"
+     my $cmd="java -jar \$EBROOTTRIMMOMATIC/trimmomatic-0.38.jar SE -threads 4 $f  $qc_folder/${acc}_F.fq.gz  ILLUMINACLIP:\$EBROOTTRIMMOMATIC/adapters/TruSeq3-PE.fa:2:30:10 LEADING:3 TRAILING:3 SLIDINGWINDOW:4:15 MINLEN:36";
+     push @params, $cmd;
   }   
 }
 ##
@@ -88,7 +96,7 @@ my $header = qq(#!/bin/bash
 #BSUB -e myjob.%J.%I.err             # error file name in which %J is replaced by the job ID
 
 module load zlib/1.2.8-intel-2015B
-module load Java/1.7.0_80
+module load Java/1.8.0_181
 export PERL5LIB="/home/wangsc/perl5/lib/perl5/x86_64-linux-thread-multi___/"  # modify this path to reflect your own setup
 );
 
@@ -104,14 +112,14 @@ $qc_header =~ s/-J\s+myjob/"-J ". $job_name . "_QC[1-$num_jobs]"/e;
 $qc_header =~ s/myjob/$job_name . "_QC"/eg;
 $qc_header =~ s/-n 1/-n $num_param/;
 $qc_header =~ s/ptile=1/ptile=$num_param/;
-print QB $qc_header, "\ndate\n";
+print QB $qc_header, "\nmodule load Trimmomatic/0.38-Java-1.8.0\ndate\n";
 print STDERR '$num_jobs: ', $num_jobs, "\n";
 print STDERR '$num_param: ', $num_param, "\n";
 foreach my $ind (1 .. $num_jobs){
   my $start = ($ind - 1) * $num_param;
   my $end = $start + $num_param - 1;
   $end = $#params if $end > $#params;
-  my $cmd = "perl $qc_pl  -p $num_param " . join(" ", @params[$start .. $end]);
+  my $cmd = join("\n", @params[$start .. $end]);
   print QB "if [ \$LSB_JOBINDEX  ==  $ind ]; then\n", $cmd, "\nfi\n\n";
   print STDERR "if [ \$LSB_JOBINDEX  ==  $ind ]; then\n", $cmd, "\nfi\n\n";
   last if $start >= $#params or $end >= $#params;
@@ -130,24 +138,22 @@ my $aln_bsub = "1.aln.bsub";
 open(ALN, ">$aln_bsub") or die $!;
 
 my %acc_qc;
-use File::Basename;
 foreach (@params){
   my @p = split /\s+/,$_;
-  my @fs = /\-pe/?@p[1,2]:$p[1];
+  my @fs = / PE /?@p[8..11]:$p[7];
   my $dir = dirname($fs[0]);
-  my $acc = $h{$fs[0]};
-  if(@fs == 1){push @{$acc_qc{$acc}},  $dir . "/IlluQC_Filtered_files/" . basename($fs[0]) . "_filtered"; next}
-  my @filtered = map {$dir . "/IlluQC_Filtered_files/" . basename($fs[$_]) . "_filtered";  }0 ..$#fs;
-  ##die join("\n", @filtered), "\n" unless -e $filtered[0] and -e $filtered[1];
-  my $single_HQ = $dir . "/IlluQC_Filtered_files/" . basename($fs[0]) . "_" . basename($fs[1]) . "_unPaired_HQReads";
+  my $acc = $h{$p[6]};
+  if(@fs == 1){push @{$acc_qc{$acc}},  $fs[0]; next}
+  my @filtered = @fs[0,2];
+  #my $single_HQ = $dir . "/IlluQC_Filtered_files/" . basename($fs[0]) . "_" . basename($fs[1]) . "_unPaired_HQReads";
   push @{$acc_qc{$acc}}, join(",", @filtered);
-  push @{$acc_qc{$acc}}, $single_HQ if -e $single_HQ and not -z $single_HQ;
+  #push @{$acc_qc{$acc}}, $single_HQ if -e $single_HQ and not -z $single_HQ;
 }
 $aln_pl = "/home/$ENV{USER}/pl_scripts/align.pl" unless defined $aln_pl;
 $REF="/home/$ENV{USER}/scratch_fast/Projects/GBS/wheat/ref_data/wheat_concate/Dgenome/Dgenome.fa" unless $REF;
 $REFINDEX="/home/$ENV{USER}/scratch_fast/Projects/GBS/wheat/ref_data/wheat_concate/Dgenome/Dgenome.fa" unless $REFINDEX;
 my $outdir = "Alignments"; mkdir($outdir) unless -d $outdir;
-my $b2 = `module load Bowtie2; which bowtie2`; 
+my $b2 = `module load Bowtie2/2.3.4.2-foss-2018b; which bowtie2`; 
 my @aln_cmds;
 map{
   my $acc = $_;
@@ -162,7 +168,7 @@ $total ++ if (scalar @aln_cmds) / 10;
 
 $aln_header =~ s/myjob/$job_name."_ALN[1-$total]"/e;
 $aln_header =~ s/myjob/$job_name."_ALN"/eg;
-print ALN  $aln_header, "\ndate\n";
+print ALN  $aln_header, "\nmodule load Bowtie2/2.3.4.2-foss-2018b\ndate\n";
 while($start <= $#aln_cmds){
   $index ++;
   print ALN "if [ \$LSB_JOBINDEX == $index ]; then\n";
