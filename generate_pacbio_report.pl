@@ -103,7 +103,8 @@ foreach my $cell (@cells) {
   my $r = $data->{"pbds:DataSetMetadata"}->{"Collections"}->{"CollectionMetadata"}->{"RunDetails"};
   my ($run_start, $stamp_name, $run_id) = ($r->{"WhenCreated"}, $r->{"TimeStampedName"}, $r->{"Name"});
   my $subset_str = `cat $subset_xml`;
-  my $lib_cell = $1 if $subset_str=~/pbds\:SubreadSet.*?Name="(\S+)"/;
+  my $lib_cell = $1 if $subset_str=~/pbds\:SubreadSet.*?Name="(.*?)"/;
+  $lib_cell =~ s/\s+/_/g;
   my ($lib_name, $cell_name) = ($1, $2) if $lib_cell=~/^(.*)\-(Cell\d+)$/;
   print STDERR join("\t", "Test", $lib_cell, $lib_name, $cell_name), "\n";
   ##

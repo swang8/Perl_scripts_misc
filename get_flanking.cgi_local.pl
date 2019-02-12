@@ -22,9 +22,10 @@ my $safe_filename_characters = "a-zA-Z0-9_.";
 my $upload_dir = "/tmp";
 my $start = localtime(time);
 my $q = new CGI;
-my $len = $q->param('selection');
+#my $len = $q->param('selection');
 ## my $file = get_file($q);
-my $file = shift or die "perl $0 <marker_list>\n";
+my $file = shift or die "perl $0 <marker_list> <flanking length, default 50>\n";
+my $len = shift || 50;
 if ($file){
   my %status = get_flanking($genome, $file, $len);
   $status{"0.submit_time"} = $start . " Job submitted.<br>";
