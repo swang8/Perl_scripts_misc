@@ -37,4 +37,5 @@ perl -e '@fs=<imp_eval/*.tsv>; foreach $f(@fs){$cmd="sh /home/shichen.wang/pl_sc
 ls imp_eval/*AF.txt | parallel -j 1 Rscript /home/shichen.wang/pl_scripts/plot_imputation_accuracy_AF.R {}
 
 # plot general imputation accuracy based on GP
+Rscript /home/shichen.wang/pl_scripts/plot_imputation_accuracy_sum_table.R  imp_eval/imputation_eval.2.tsv.sum.table.csv
 
