@@ -1,6 +1,7 @@
 #!/usr/bin/perl -w
 use strict;
 use lib '/home/wangsc/perl5/lib/perl5';
+use lib '/home/shichen.wang/perl5/lib/perl5';
 use File::Basename;
 use Parallel::ForkManager;
 

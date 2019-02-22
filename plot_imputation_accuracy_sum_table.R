@@ -45,7 +45,7 @@ pdfout = paste(file, "accuracy_sum_up", "pdf", sep=".")
 
 colnames(data) = names
 
-ggplot(data = data, aes(GP, Accuracy)) + 
+p = ggplot(data = data, aes(GP, Accuracy)) + 
   geom_bar(stat="identity", fill="salmon") + ggtitle("Imputation accuracy") +
   coord_cartesian(ylim=c(0.95, 1)) +
   scale_x_continuous("Genotype probability cutoff", breaks = data$GP ) + 
