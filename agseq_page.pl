@@ -1,5 +1,6 @@
 #!/usr/bin/perl -w
 use strict;
+use File::Basename;
 my $proj = shift;
 $proj = "fillin" unless $proj=~/\S/;
 
@@ -84,13 +85,13 @@ Imputation was performed using Beagle V4.0 with default parameters. The produced
 
 # get imputed vcf files;
 my @gz_files = <imputed/*.vcf.gz>;
-my @gz_list = map{"<li> <a href=\"$_\">" . $_. "</a>" }@gz_files;
+my @gz_list = map{"<li> <a href=\"$_\">" . $proj . "_" . basename($_). "</a>" }@gz_files;
 print join("\n", "<ul>", @gz_list, "</ul>"), "\n";
 
 # get filtered  imputed vcf
 print qq(<h3>Imputed VCF, filtered with GP >= 0.9</h3>), "\n";
 my @gp_vcf = <imputed/*GPfiltered_0.9.vcf>;
-my @gp_list = map{"<li> <a href=\"$_\">" . $_. "</a>"}@gp_vcf;
+my @gp_list = map{"<li> <a href=\"$_\">" . $proj. "_". basename($_) . "</a>"}@gp_vcf;
 print join("\n", "<ul>", @gp_list, "</ul>"), "\n";
 
 my $date = localtime(time);
