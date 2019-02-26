@@ -93,6 +93,8 @@ my @gp_vcf = <imputed/*GPfiltered_0.9.vcf>;
 my @gp_list = map{"<li> <a href=\"$_\">" . $_. "</a>"}@gp_vcf;
 print join("\n", "<ul>", @gp_list, "</ul>"), "\n";
 
+my $date = localtime(time);
+my $year = (split /\s+/, $data)[-1];
 # print the last part
 print qq(
 <div class="row">
@@ -115,7 +117,7 @@ To evaluate how the imputation performs, a random 3% of genotypes were masked as
             </div>
             </div>
             <hr>
-            <footer align="center"><p>Prepared by TXGEN, 2019</p></footer>
+            <footer align="center"><p>Prepared by TXGEN, $year</p></footer>
             </body>
             </html>
 );
