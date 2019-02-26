@@ -46,7 +46,7 @@ my $header=qq(<head>
                                                                                 <div class="col-md-6"><a href="/shichen/agseq_workflow.png" target="_blank"><img src="/shichen/agseq_workflow.png" class="img-thumbnail" /></a> </div>
                                                                                 <div class="col-md-6">
                                                                                 <ul>
-                                                                                <li><code>RAW</code> variations filtered with Missing (&lt 50%) and MAF ( &gt 5%): <br> <a href="agseq_filtered_MaxMissing0.5_MinMAF0.05.vcf">agseq_filtered_MaxMissing0.5_MinMAF0.05.vcf</a></li>
+                                                                                <li><code>RAW</code> variations filtered with Missing (&lt 50%) and MAF ( &gt 5%): <br> <a href="agseq_filtered_MaxMissing0.5_MinMAF0.05.vcf">${proj}_agseq_filtered_MaxMissing0.5_MinMAF0.05.vcf</a></li>
                                                                                 <p>Note: This file is the starting point for imputation. After imputation, additional filtering may be applied.</p>
                                                                                 <li>Reference genome: <a href="" target="_blank"> </a></li>
                                                                                 </ul></div>
