@@ -1,3 +1,5 @@
+module load parallel
+
 # suppose a list of vcf files were provided
 vcfs=$@
 
@@ -58,7 +60,7 @@ Rscript ~/pl_scripts/histogram.R  -i GP_0.8_sample_missing.txt -e 0 -t "Sample m
 
 
 # step 4: evaluate imputation accuracy with random masking of 5% of genotyped data as missing
-sh ~/pl_scripts/imputation/run.sh $IMPINPUT 0.05 
+sh ~/pl_scripts/imputation/run.sh $IMPINPUT 0.03
 
 perl -e '@fs=<imp_eval/*.tsv>; foreach $f(@fs){$cmd="sh /home/shichen.wang/pl_scripts/imputation/summarize.sh $f >${f}_AF.txt; sh /home/shichen.wang/pl_scripts/imputation/summarize_v2.sh $f"; print $cmd, "\n"; system($cmd)}'
 

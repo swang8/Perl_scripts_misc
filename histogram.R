@@ -45,7 +45,7 @@ theme(
     axis.title.x = element_text(size=20, face="bold"),
     axis.title.y = element_text(size=20, face="bold")
     ) + 
-scale_x_continuous(limits=c(0, 1))
+scale_x_continuous(limits=c(-0.1, 1))
 
 pdfout = paste(opt$input, "pdf", sep=".")
 
