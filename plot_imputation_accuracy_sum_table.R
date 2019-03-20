@@ -44,10 +44,11 @@ ggsave(pdfout, plot=p, device="pdf")
 pdfout = paste(file, "accuracy_sum_up", "pdf", sep=".")
 
 colnames(data) = names
-
+data$Accuracy = round(data$Accuracy, 2)
 p = ggplot(data = data, aes(GP, Accuracy)) + 
   geom_bar(stat="identity", fill="salmon") + ggtitle("Imputation accuracy") +
-  coord_cartesian(ylim=c(0.95, 1)) +
+  geom_text(aes(label=Accuracy), vjust=-0.3, size=3.5)+
+  coord_cartesian(ylim=c(0.80, 1)) +
   scale_x_continuous("Genotype probability cutoff", breaks = data$GP ) + 
   theme(axis.text=element_text(size=18),axis.title=element_text(size=20,face="bold"), plot.title = element_text(size=25, face="bold", hjust = 0.5))
 

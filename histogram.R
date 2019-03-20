@@ -41,7 +41,7 @@ if (! is.null(opt$ylab))  p = p + ylab(opt$ylab)
 p = p + 
 theme(
     plot.title = element_text(size=30, face="bold", hjust=0.5),
-    plot.subtitle=element_text(size=20, hjust=0.5, face="italic"),
+    plot.subtitle=element_text(size=12, hjust=0.5, face="italic"),
     axis.title.x = element_text(size=20, face="bold"),
     axis.title.y = element_text(size=20, face="bold")
     ) + 

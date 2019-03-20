@@ -50,6 +50,26 @@ my $header=qq(<head>
                                                                                 <li><code>RAW</code> variations filtered with Missing (&lt 50%) and MAF ( &gt 5%): <br> <a href="agseq_filtered_MaxMissing0.5_MinMAF0.05.vcf">${proj}_agseq_filtered_MaxMissing0.5_MinMAF0.05.vcf</a></li>
                                                                                 <p>Note: This file is the starting point for imputation. After imputation, additional filtering may be applied.</p>
                                                                                 <li>Reference genome: <a href="" target="_blank"> </a></li>
+<li>Analysis steps:</li>
+<ol style="font-size:12px">
+<li>QC: Trimmomtic v0.38; Quality filtering and adapter trimming, ”LEADING:3 TRAILING:3 SLIDINGWINDOW:4:15 MINLEN:36”</li>
+<li>Mapping: Bowtie2 v2.3.4;
+Alignment to the reference genome, “--end-to-end –very-sensitive”</li>
+<li>Processing: SAMTools v1.19 and  PICARD v1.16;
+Sorting, local Realignment, MQ filtering (MQ>5), et al.
+</li>
+<li>Calling variation and genotyping: GATK (v3.5)  HaplotypeCaller; “-drf BadMate -drf DuplicateRead -U ALLOW_N_CIGAR_READS”
+</li>
+<li>Filtering: Only keep variations with <50% of missing and MAF > 5%
+</li>
+<li>Imputation with Beagle V4.0
+</li>
+<li>Filtered based on the Genotype Probability (GP >= 0.9)
+</li>
+<li>Additional filtering (optional):
+Proportion of missing data, MAF, et al.
+</li>
+</ol>
                                                                                 </ul></div>
                                                                                 </div>
 );
@@ -95,7 +115,7 @@ my @gp_list = map{"<li> <a href=\"$_\">" . $proj. "_". basename($_) . "</a>"}@gp
 print join("\n", "<ul>", @gp_list, "</ul>"), "\n";
 
 my $date = localtime(time);
-my $year = (split /\s+/, $data)[-1];
+my $year = (split /\s+/, $date)[-1];
 # print the last part
 print qq(
 <div class="row">
