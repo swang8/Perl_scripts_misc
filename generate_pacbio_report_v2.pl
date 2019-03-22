@@ -121,7 +121,7 @@ foreach my $opt (@runs) {
     
     ## de-multiplexed or not?
     unless ($barcode){
-        my $zip_cmd = "tar --exclude=\"*.bam\"   -cvf  $zip_dir/$zip -C $dir " . join(" ", (map{basename($_)}@cells));# print STDERR $zip_cmd, "\n";
+        my $zip_cmd = "tar  -cvf  $zip_dir/$zip -C $dir " . join(" ", (map{basename($_)}@cells));# print STDERR $zip_cmd, "\n";
         print STDERR $zip_cmd, "\n";
         die if system($zip_cmd);
         $zip = basename($zip_dir) . "/" . $zip;
@@ -257,9 +257,12 @@ foreach my $opt (@runs) {
             my $lima_dir = (<$task_dir/barcoding.tasks.lima*>)[0];
             my $cmd = "ln -s $lima_dir $report_dir" . "/demultiplex/" . basename($cells[$_]);
             print STDERR $cmd, "\n";
-            die "$cmd failed !!" if system($cmd);
+            if (system($cmd)){
+              print STDERR "\n", $report_dir . "/demultiplex/" . basename($cells[$_]), " already exists!! Please double check!\n Script halted!!\n\n";
+              exit;
+            }
         } 0.. $#cells;
-        my $zip_cmd = "tar  --exclude=\"*.bam\"  -cvhf  $zip_dir/$zip -C ${report_dir}/demultiplex " . join(" ", (map{basename($_)}@cells)); print STDERR $zip_cmd, "\n";
+        my $zip_cmd = "tar   -cvhf  $zip_dir/$zip -C ${report_dir}/demultiplex " . join(" ", (map{basename($_)}@cells)); print STDERR $zip_cmd, "\n";
         die "$zip_cmd failed !!"  if system($zip_cmd)
     }
 }
@@ -365,7 +368,6 @@ close DONE;
 ## subroutines
 sub get_stats_from_bam {
   my $bam = shift or die;
-  return(10000,10000,10000,10000);
   print STDERR "Bam file: $bam \n";
   my $samtools =  `which samtools`   || '/home/shichen.wang/Tools/bin/samtools';
   chomp $samtools;
