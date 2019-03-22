@@ -26,6 +26,9 @@ Examples:
 * To generate report for certain cell(s) of the runs:
   $0 -p 18987Avi -r  /data4/pacbio/r54092_20160921_211039:1_A01:2_B02   /data4/pacbio/r54092_20180921_298765:3_C03
 
+* To generate report for certain cell(s) of the runs with de-multiplexed data:
+  $0 -p 18987Avi -r  /data4/pacbio/r54092_20160921_211039:1_A01:2_B02   /data4/pacbio/r54092_20180921_298765:3_C03  -b barcodes.csv
+
 * To run BLAST
 RUNBLAST=1 $0 -p 18987Avi -r /data4/pacbio/r54092_20160921_211039
 
@@ -41,16 +44,25 @@ $star_bar
 
 # get options
 my $proj_id;
+my $barcode;
 my @runs;
 
 GetOptions(
     'proj=s' => \$proj_id,
-    'runs=s@' => \@runs
+    'barcode=s' => \$barcode,
+    'runs=s{1,}' => \@runs
 );
 
 unless ($proj_id and @runs){
   print $usage;
   exit;
+}
+
+print STDERR join("\n", @runs), "\n"; 
+
+my %task_dirs = ();
+if($barcode){
+    %task_dirs = get_task_folders("/data4/pacbio/000");
 }
 
 # prepare the report directory
@@ -73,6 +85,8 @@ my %cell_id;
 
 my @summary;
 my @page;
+my @links;
+my @cell_bams;
 
 foreach my $opt (@runs) {
     # getting the data dir and cell names
@@ -104,21 +118,32 @@ foreach my $opt (@runs) {
     my $zip_dir = $output_dir . "/" . random_str();
     mkdir ($zip_dir) unless -d $zip_dir;
     #my $zip_cmd = "tar --exclude=\".*\" --exclude=\"*scraps.*\"  -cvf  $zip_dir/$zip -C $dir " . join(" ", (map{basename($_)}@cells));# print STDERR $zip_cmd, "\n";
-    my $zip_cmd = "tar  -cvf  $zip_dir/$zip -C $dir " . join(" ", (map{basename($_)}@cells));# print STDERR $zip_cmd, "\n";
-    print STDERR $zip_cmd, "\n";
-    die if system($zip_cmd);
-    $zip = basename($zip_dir) . "/" . $zip;
-
+    
+    ## de-multiplexed or not?
+    unless ($barcode){
+        my $zip_cmd = "tar --exclude=\"*.bam\"   -cvf  $zip_dir/$zip -C $dir " . join(" ", (map{basename($_)}@cells));# print STDERR $zip_cmd, "\n";
+        print STDERR $zip_cmd, "\n";
+        die if system($zip_cmd);
+        $zip = basename($zip_dir) . "/" . $zip;
+    }
+    
+    my @analysis_dirs=();
+    
     ## get figures and tables for each cell
     foreach my $cell (@cells) {
         print STDERR "Processing ". basename($cell). " for run $run ...\n";
         my @files = <$cell/*xml>;
         next unless @files;
         my $subread_bam = (<$cell/*subread*bam>)[0];
+        push @cell_bams, $subread_bam;
+
         my $metadata_xml; map{$metadata_xml = $_ if /run.metadata/}@files;
 
         my $subset_xml; map{$subset_xml = $_ if /subreadset/}@files;
+
         my $analysis_dir; map{print STDERR "\t", $_, "\n"; $analysis_dir = $_ if $analysis_dir_properties{$_}->[1] eq $subset_xml}keys %analysis_dir_properties;
+        unless($analysis_dir){print STDERR "\nCan not find $analysis_dir for $cell !!\n"; exit}
+        push @analysis_dirs, $analysis_dir;
 
         my $pbscala_stdout = $analysis_dir . "/pbscala-job.stdout";
 
@@ -151,6 +176,11 @@ foreach my $opt (@runs) {
         $sub_read_count_all += $sub_read_count;
         $poly_read_total_all += $poly_read_total;
         $sub_read_total_all += $sub_read_total;
+
+        $poly_read_count = format_number($poly_read_count);
+        $poly_read_total = format_number($poly_read_total);
+        $sub_read_count = format_number($sub_read_count);
+        $sub_read_total = format_number($sub_read_total);
 
         push @page, "<div class=\"run\">";
         push @page, "<h2>", $run, "</h2>\n";
@@ -201,15 +231,9 @@ foreach my $opt (@runs) {
         );
 
         push @page, "</div>\n"; # class=run
-
-        push @page, qq(
-        <li><div class="documentation">Retrieve data</div>
-        You may click <a href="$zip"> this link </a> or use the wget command.
-                <pre>
-        <script type="text/javascript">document.write(dl_cmd(\"$zip\"));</script>
-        </pre>
-        </li>
-        );
+        my $link = $zip_dir . "/" .$zip;
+        $link=~s/^\S+?\///;
+        push @links, $link;
 
         # run blast
         if (exists $ENV{RUNBLAST}){
@@ -224,7 +248,20 @@ foreach my $opt (@runs) {
         }
 
     };
-
+    # create tar files for de-muxed data
+    if ($barcode){
+        mkdir($report_dir . "/demultiplex");
+        map{
+            print STDERR "Analysis dir: ", $analysis_dirs[$_], "\n";
+            my $task_dir = $task_dirs{$cell_bams[$_]} . "/tasks/";
+            my $lima_dir = (<$task_dir/barcoding.tasks.lima*>)[0];
+            my $cmd = "ln -s $lima_dir $report_dir" . "/demultiplex/" . basename($cells[$_]);
+            print STDERR $cmd, "\n";
+            die "$cmd failed !!" if system($cmd);
+        } 0.. $#cells;
+        my $zip_cmd = "tar  --exclude=\"*.bam\"  -cvhf  $zip_dir/$zip -C ${report_dir}/demultiplex " . join(" ", (map{basename($_)}@cells)); print STDERR $zip_cmd, "\n";
+        die "$zip_cmd failed !!"  if system($zip_cmd)
+    }
 }
 
 ###################
@@ -284,6 +321,25 @@ print $HTML "</tbody>\n</table>\n";
 
 print $HTML join("\n", @page), "\n";
 
+# print download links
+print $HTML qq( <li><div class="documentation">Retrieve data</div>);
+print $HTML qq(<ol>);
+map{print $HTML "<li>", "<a href=\"$_\">", basename($_) . "</a></li>"}@links;
+print $HTML qq(</ol>);
+print $HTML qq(Or download with <code>wget</code> command.);
+print $HTML qq( <pre id="wget">);
+map{my $l=qq(<script type="text/javascript">var p = document.getElementById("wget");  p.innerHTML += dl_cmd(\"$_\");</script>); print $HTML $l, "\n" } @links;
+print $HTML  qq(</pre></li>);
+
+if ($barcode){
+    system("cp $barcode $report_dir/");
+    print $HTML qq( <li><div class="documentation">Barcode file</div>
+    Please downlod the barcode file here:  <a href="$barcode"> $barcode </a>
+    </li>
+    );
+
+}
+
 # print document and foot
 print $HTML qq(<li><div class="documentation">Documentation</div>
         	<ul>
@@ -309,6 +365,7 @@ close DONE;
 ## subroutines
 sub get_stats_from_bam {
   my $bam = shift or die;
+  return(10000,10000,10000,10000);
   print STDERR "Bam file: $bam \n";
   my $samtools =  `which samtools`   || '/home/shichen.wang/Tools/bin/samtools';
   chomp $samtools;
@@ -352,6 +409,20 @@ sub get_properties {
   return %return;
 }
 
+sub get_task_folders {
+    my $root = shift;
+    my %return;
+    my @dirs = <$root/*>;
+    foreach my $d (@dirs){
+        my $entry_xml = <$d/entry-points/*subreadset.xml>;
+        next unless $entry_xml;
+        my $r = `cat $entry_xml`;
+        my $subread_bam = $1 if $r =~ /Description="Points to the subreads bam file." ResourceId="(\S+)\"/; 
+        $return{$subread_bam} = $d
+    }
+    return %return;
+}
+
 sub print_header {
   my $fh = shift;
   my $p = shift;
@@ -365,7 +436,20 @@ sub print_header {
           <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
   <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
-	<link href="/media/css/delivery.css" rel="stylesheet"/>
+  <link href="/media/css/delivery.css" rel="stylesheet"/>
+
+<script type="text/javascript">
+function basename(path) {
+        return path.replace(/\\\\/g,'/').replace( /.*\\//, '' );
+}
+function dirname(path) {
+        return path.replace(/\\\\/g,'/').replace(/\\/[^\\/]*\$/, '');;
+}
+function dl_cmd(file) {
+        dir = dirname(document.URL);
+            return 'wget ' + dir + '/' + file;
+}
+</script>
 
 </head>
 <body>
