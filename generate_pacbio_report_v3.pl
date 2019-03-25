@@ -70,6 +70,7 @@ if($barcode){
 my $localtime=localtime(time);  
 my @p=split /\s+/,$localtime;
 my $report_dir = "pacbio_" . $proj_id . "_". join("", @p[1,2,-1]);
+if( -d $report_dir){print STDERR "Error: $report_dir already exist!\n"; exit}
 mkdir($report_dir) unless -d $report_dir;
 my $output_html =  $report_dir . "/index.html";
 open (my $HTML, ">$output_html") or die "$output_html error!";
@@ -186,7 +187,7 @@ foreach my $opt (@runs) {
 
         push @page, "<div class=\"run\">";
         push @page, "<h2>", $run, "</h2>\n";
-        push @page, "<li> <div class=\"lane\">", basename($cell), "</div></li>";
+        push @page, "<div class=\"lane\">", basename($cell), "</div>";
         push @page, qq(
         <h4>Sequencing summary:</h4>
         <table class="table table-bordered table-condensed">
@@ -334,34 +335,32 @@ print $HTML "</tbody>\n</table>\n";
 print $HTML join("\n", @page), "\n";
 
 # print download links
-print $HTML qq( <li><div class="documentation">Retrieve data</div>);
+print $HTML qq( <div class="documentation">Retrieve data</div>);
 print $HTML qq(<ol>);
 map{print $HTML "<li>", "<a href=\"$_\">", basename($_) . "</a></li>"}@links;
 print $HTML qq(</ol>);
 print $HTML qq(Or download with <code>wget</code> command.);
 print $HTML qq( <pre id="wget">);
 map{my $l=qq(<script type="text/javascript">var p = document.getElementById("wget");  p.innerHTML += dl_cmd(\"$_\");</script>); print $HTML $l, "\n" } @links;
-print $HTML  qq(</pre></li>);
+print $HTML  qq(</pre>);
 
 if ($barcode){
     system("cp $barcode $report_dir/");
     my $barcode_link = basename($barcode);
-    print $HTML qq( <li><div class="documentation">Barcode file</div>
+    print $HTML qq( <div class="documentation">Barcode file</div>
     The samples are multiplexed. You will need the barcode file to link barcodes to samples. <br>
     <code>Please downlod the barcode file here:  <a href="$barcode_link"> $barcode_link </a></code>
-    </li>
     );
 
 }
 
 # print document and foot
-print $HTML qq(<li><div class="documentation">Documentation</div>
+print $HTML qq(<div class="documentation">Documentation</div>
         	<ul>
         	<li><a href="http://www.pacb.com/wp-content/uploads/2015/09/Pacific-Biosciences-Glossary-of-Terms.pdf">PacBio Terminology</a></li>
         	<li><a href="https://github.com/PacificBiosciences/Bioinformatics-Training/wiki">Bioinformatics Tutorial for PacBio data</a></li>
                <img src="/media/image/pacbio.png", width=500>
         	</ul>
-        </li>
         );
 print $HTML "<hr>", "<div id=\"footer\">Texas A&M AgriLife Genomcis and Bioinformatics Service. &copy 2017</div>";
 print $HTML "</div></body></html>";
