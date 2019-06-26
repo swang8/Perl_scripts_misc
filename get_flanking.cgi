@@ -11,10 +11,14 @@ use JSON;
 my $gfClient = "/home/shichen.wang/bin/i686/gfClient ";
 
 my $genome = {};
+my $pseudo_genome = {};
 map{
   my $f = "/home/shichen.wang/data4/wheat_CSS/chr". $_. "_contigs_formatted.fa";
   my $gn = Bio::DB::Fasta->new($f);
-  $genome->{$_} = $gn
+  $genome->{$_} = $gn;
+  my $f2 = "/data4/.shichen/wheat_pseudomolecular/v1.0/Wheat_IWGSC_WGA_v1.0_pseudomolecules/161010_Chinese_Spring_v1.0_pseudomolecules_parts.fasta_chr".$_;
+  my $gn2 = Bio::DB::Fasta->new($f2);
+  $pseudo_genome->{$_} = $gn2;
 }1..7;
 
 $CGI::POST_MAX = 1024 * 50000; ## maximum 50Mb
@@ -28,7 +32,7 @@ print $q->header(-type => "application/json", -charset => "utf-8");
 my $len = $q->param('selection');
 my $file = get_file($q);
 if ($file){
-  my %status = get_flanking($genome, $file, $len);
+  my %status = get_flanking($genome, $pseudo_genome, $file, $len);
   $status{"0.submit_time"} = $start . " Job submitted.<br>";
   my $json = to_json(\%status);
   print $json;
@@ -38,26 +42,59 @@ exit;
 ##
 sub get_flanking {
   my $genome = shift;
+  my $pseudo_genome=shift;
   my $file = shift;
   my $flanking_len = shift;
+  
+  # 90K
+  use Storable;
+  my $hashref = retrieve("/home/shichen.wang/data4/wheat_90K/90K_seq.csv.hash");
+
   my $tmp = "/home/shichen.wang/for_down/tmp/" . random_string(10) . time() . ".fa";
   open (OUT, ">", $tmp) or die $!;
   open (my $F, $file) or die $!;
   while(<$F>){
     chomp;
     s/\s//g;
-    my @t = split /[,:]/, $_;
+    my @t = split /[,:_]/, $_;
+    my $query_id = $_;
+    #if(@t==1){
+    #    if(exists $hashref->{$t[0]}){print OUT "$t[0]", ",", $hashref->{$t[0]}, "\n" }
+    #}
+    if(exists $hashref->{$query_id}){print OUT "$query_id", ",", $hashref->{$query_id}, "\n";  next}
     next unless @t >= 2;
-    my $chr = $1 if $t[0] =~ /^\d+_(\d)/;
-    next unless exists $genome->{$chr};
-    my $s = $t[1] - $flanking_len; $s = 1 if $s < 1;
-    my $e = $t[1] + $flanking_len;
-    my $seq = $genome->{$chr}->seq($t[0], $s => $e);
-    my $p = $t[1] <= $flanking_len?$t[1]-1:$flanking_len;
-    $seq = lc($seq); my $char = uc (substr($seq, $p, 1));
-    substr($seq, $p, 1) = $char;
-    
-    print OUT join("_", @t[0,1]), ",", $seq, "\n";
+    $query_id=~s/\,/_/;
+    if (/part\d/){ # pseudo molecular v1.0
+        # chr5A_part2_244933234
+        my $chr_full = join("_", @t[0,1]);
+        my $chr_num = $1 if $t[0]=~/chr(\d)/i;
+        my $snp = $t[2];
+        next unless exists $pseudo_genome->{$chr_num};
+        my $s = $t[-1] - $flanking_len; $s = 1 if $s < 1;
+        my $e = $t[-1] + $flanking_len;
+        my %ids = map{$_, 1}$pseudo_genome->{$chr_num}->ids;
+        if (not exists $ids{$chr_full}){print OUT join("_", @t), ",", "$chr_full is not in the reference! Reference has: ", join(" ", sort{$a cmp $b}keys %ids), "\n"; next}
+        my $seq = $pseudo_genome->{$chr_num}->seq($chr_full, $s => $e);
+        my $p = $t[-1] <= $flanking_len?$t[1]-1:$flanking_len;
+        $seq = lc($seq); my $char = uc (substr($seq, $p, 1));
+        substr($seq, $p, 1) = $char;
+        #print OUT join("_", @t), ",", $seq, "\n";
+        print OUT $query_id, ",", $seq, "\n";
+    }
+    else{
+        ## CSS
+        my $chr = $1 if $t[1]=~/^(\d+)/;
+        next unless exists $genome->{$chr};
+        my $s = $t[-1] - $flanking_len; $s = 1 if $s < 1;
+        my $e = $t[-1] + $flanking_len;
+        #my $seq = $genome->{$chr}->seq($t[0], $s => $e);
+        my $seq = $genome->{$chr}->seq(join("_", @t[0..($#t-1)]), $s => $e);
+        my $p = $t[-1] <= $flanking_len?$t[1]-1:$flanking_len;
+        $seq = lc($seq); my $char = uc (substr($seq, $p, 1));
+        substr($seq, $p, 1) = $char;
+        #print OUT join("_", @t), ",", $seq, "\n";
+        print OUT $query_id, ",", $seq, "\n";
+    }
   }
   close $F;
   close OUT;

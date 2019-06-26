@@ -151,7 +151,6 @@ sub run_the_job{
   
   &parallel_blat($blat_css_cmd, @blat_nrg_cmd, @blat_pop_cmd); 
 
-  my @blat_outputs = map{$1 if /(\S+)\s+1\>/}($blat_css_cmd,@blat_nrg_cmd, @blat_pop_cmd);
   my @blat_outputs = map{my @p=split /\s+/,$_; $p[6]}($blat_css_cmd,@blat_nrg_cmd, @blat_pop_cmd);
   
   
@@ -199,9 +198,8 @@ sub create_tmp_file {
 
 sub make_fasta {
   my $file = shift; 
-  my $fasta = $file;
+  my $fasta = $file . ".fasta";
   my %chr;
-  $fasta =~ s/csv$/fasta/;
   open (my $OUT, ">$fasta") or die $!;
   open (my $IN, $file) or die $!;
   my $l = 0;
