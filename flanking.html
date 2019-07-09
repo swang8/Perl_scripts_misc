@@ -1,0 +1,155 @@
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en-US" xml:lang="en-US">
+<head>
+<title>flanking</title>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+  <style>
+ #container{
+
+  width: 700pt;
+
+  background-color: #F9F9F9;
+
+  margin: auto;
+
+  padding: 10px;
+
+}
+body{
+  background-color: #f9f9f9;
+}
+
+#output {
+  font: bold 10px Georgia, serif;
+}
+
+#status {
+  float: right;
+  animation-duration: 3s;
+  animation-name: slidein;
+  animation-iteration-count: infinite;
+  animation-direction: alternate;
+}
+
+@KeFrames slidein {
+  from {
+    margin-left: 100%;
+    width = 300%;
+  }
+
+  to {
+    margin-left: 0%;
+    width: 100%;
+  }
+  
+}
+
+</style>
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+<script src="https://code.jquery.com/jquery-1.10.2.js"></script>
+<script>
+// Attach a submit handler to the form
+$(document).ready(function() {
+  $( '#MainForm' ).submit(function( event ) {
+   
+    // Stop form from submitting normally
+    event.preventDefault();
+    var d = new Date();
+    var output_str = "Log:<p>" + d.toUTCString() + "  Job sumitted.<br>";
+    document.getElementById("mesg").innerHTML = "<p>Job is running. Please hold on ...</p>-- No great thing is suddenly done. Don't you agree?<hr>";
+    $("#mesg").css('outline', 'none !important').attr("tabindex", -1).focus();
+    document.getElementById("output").innerHTML = output_str + "<p></p><br><hr>";
+    // Get some values from elements on the page:
+    var url = "get_flanking_v2.cgi";
+    //var formData = new FormData($(this)[0]);
+    var formData = new FormData(this);
+    //mfor ( var p of formData){console.log(p)}
+    console.log(formData);
+    $.ajax({
+      url: url,
+      type: 'POST',
+      //timeout: 600000, //10seconds
+      data: formData,
+      processData: false,
+      contentType: false,
+      success: function(data){
+         //alert("Successful done!");
+         var json = data;
+         console.log(json);
+         var d = new Date();
+         var download_url = d.toUTCString() + " Job finished.<br><hr>";
+         output_str = output_str + download_url;
+         document.getElementById("mesg").innerHTML = "Job is done. Please download your results from " + "<a style=\"color:blue;font-size:20px;\" href= " + json["url"] + ">" + "this link</a>.<p><hr>";
+         document.getElementById("output").innerHTML = output_str;
+      }
+    });
+  });
+});
+</script>
+</head>
+<body>
+
+<div id="container">
+<div class="form-group">
+<h4>This tool may be used to extract the flanking sequencing of certain loci from the CSS seuences (KFX Mayer, et al. 2014), sequences of wheat 90K array and IWGSC pseudomolecular reference V1.0.</h4>
+<p>Any suggestions please contact: Shichen Wang, wangsc AT tamu edu.</p>
+<hr>
+<p>
+<h5>Enter your loci below in comma-, underscore- or colon-delimited format (NO header):</h5>
+<h5>Updated on June 2017 to include 90K markers: use either ID (IWB10) or name(BobWhite_c10090_559)</h5>
+<h5>Updated on Aug 2018 to include IWGSC pseudo molecular v1.0</h5>
+<strong>Example input:</strong><br>
+<pre>
+3374074_7dl:2289
+1911076_1ds,8433
+5188891_2bs,1345
+7960036_2bl,1672
+2587997_3ds:306
+6918051_3dl:1555
+6861954_3dl,1878
+4869572_4bs,7966
+IWB11
+BobWhite_c10090_559
+chr5A_part2:244933234 
+chr1B_part1,8566169
+chr1B_part1_8566169
+</pre>
+<BR>
+<strong>Note:</strong>
+<ol>
+<li>Chr and Pos can be separated by comma(,), colon(:) or underscore(_) </li>
+<li>Chromosome/contig IDs are <code>case sensitive</code>.</li>
+</ol>
+<BR>
+<strong>Example output:<br>
+</strong>
+<pre>
+3374074_7dl_2289,ggtactgattcattacaactgcaccaaatgtggtacttctttgcaattaa<code>T</code>tcagttctacataaagacaccgatgaagggcagttgctcacgacagggga
+chr5A_part2_244933234,ggtggcaattggctgacggtggcggtggcggtgggtagtccgccgccgcgTcgtggtggtggtggtggtggccttgggtgaagaactggtactcgcgcagc
+</pre>
+<br>
+<br>
+You may paste your data here:<br>
+<FORM  METHOD = POST NAME="MainForm" id="MainForm" ENCTYPE= "multipart/form-data" >
+<textarea name="SEQUENCE" rows=10 cols=100>
+</textarea>
+<br>
+<br>
+<p>
+The length of flanking (bp): 
+<select name=selection>
+<option> 50 </option>
+<option> 100 </option>
+</select>
+</p>
+<BR>
+<INPUT TYPE="button" class="btn btn-default" VALUE="Clear data" onClick="MainForm.SEQUENCE.value='';MainForm.SEQFILE.value=''; MainForm.SEQUENCE.focus();">
+<INPUT TYPE="submit" class="btn btn-default" VALUE="Get sequences">
+<HR>
+</div>
+</FORM>
+<div id="mesg"> </div> 
+<div id="output"></div>
+</div>
+
+</body>
+</html>

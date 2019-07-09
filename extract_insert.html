@@ -1,0 +1,59 @@
+<html>
+<head>
+ <title>Extract Insert</title>
+ <meta charset="utf-8">
+ <meta name="viewport" content="width=device-width, initial-scale=1">
+ <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+ <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+ <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+</head>
+<body>
+<hr>
+<div class="container">
+ <div class="row">
+       <div id="logo" class="col-xs-3">
+               <a href="http://agriliferesearch.tamu.edu/"><img src="/media/image/logo.png" alt="Texas A&amp;M AgriLife Research" class="img-responsive"/></a>
+       </div>
+
+       <div id="logo" class="col-xs-9">
+               <a href="http://txgen.tamu.edu/"><img src="/media/image/txgen_logo2.png" alt="Genomics and Bioinformatics Services" style="width:30%;" class="img-responsive pull-right"/></a>
+       </div>
+ </div>
+<hr>
+<h3>Script</h3>
+<code>extract_insert.sh</code>, by Shichen @TXGEN.
+<h3 id="purpose">Purpose of the script</h3>
+<p>Extract the insert sequences from the fragments that were amplified with two primers and sequenced by <a href="www.txgen.tamu.edu">TXGEN</a>.<br>The reads should look like this: 5&#39; primer1 NNN...NNN primer2 3&#39;.</p>
+<h3 id="output">Output</h3>
+<p>The script will go through all the reads, pick only those that have the sequences mathcing both of the primers.<br>The unique insert sequences along with the primers will be printed out, as well as the number of reads that harbor the insert.<br>Primers will be in lower case, insert will be in upper case.<br></p><p>For example:<br><code>cgcgtagctagctCGGCTAGCATCGTAGCTAGCTCATcgtatgcgtcgatccgta   325</code></p>
+"325" is the number of reads that have that particular insert.<br>
+<h3 id="download">Download</h3>
+<p>The script is available here: <a href="http://download.txgen.tamu.edu/shichen/extract_insert.sh">extract_insert.sh</a>.<br>Note: this script only works on unix/linux or Mac.</p>
+<h3 id="how-to-use-it-">How to use it:</h3>
+<p>Assume you downloaded the tar file from TXGEN website, usually we have the <code>wget</code> command provided at the  bottom of the data delivery page.<br>
+<h4>Steps:</h4></p>
+<ol>
+<li><p>untar the file<br><code>tar xvf  your_data.tar</code><br>After this command, there will be a new folder created within the working directory.<br>You may check it with this command <code>ls -F</code></p>
+</li>
+<li><p>Check the data folder<br>Assume the new folder is called <code>my_data</code>, if you run <code>ls my_data/</code>, you shall see a bunch of files whose names end up with <code>.fastq.gz</code>.</p>
+</li>
+<li><p>Download the script<br><code>wget http://download.txgen.tamu.edu/shichen/extract_insert.sh</code></p>
+</li>
+<li><p>Run the script to extract the insert</li>
+The script will need three parameters:
+<ol>
+<li>the folder that holds the data</li>
+<li>the sequences for primer 1</li>
+<li>the sequences for primer 2</li>
+</ol>
+For example:<br>
+<div class="highlight"><code><span class="nx">sh</span> <span class="nx">extract_insert</span><span class="p">.</span><span class="nx">sh</span>  <span class="nx">my_data</span>  <span class="nx">cgcgtagctagct</span>  <span class="nx">cgtatgcgtcgatccgta</span>
+</code></div><br>
+<p>If the script finished successfully, a new txt file <code>insert.seq.uniq.sorted.txt</code> will be generated.</p>
+</li>
+</ol>
+
+
+</div>
+</body>
+</html>

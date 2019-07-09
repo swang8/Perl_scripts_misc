@@ -1,0 +1,60 @@
+<html>
+<head>
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+<title> NovaSeq vesus 4000</title>
+</head>
+<body>
+<div class="container">
+<div class="jumbotron">
+  <div>
+  <h3>Novaseq VS 4000</h3>
+Data are from NRG projects.
+   <h4>How:</h4> 
+	<ol>
+	<li>Took a sample that have been sequenced on 4000 twice, compare the overlapping reads and detect variations between the two batch of data (potential errors)</li>
+        <li>Took a sample that have been sequenced on 4000 and NovaSeq, compare the overlapping reads and detect variations between the two batch of data (potential errors)</li>
+	</ol>
+  </div>
+  <h4>Result:</h4>
+   For each compariation, the number of reads generated for both batches are similar.<p><p>
+   The <em>true</em> error rate would be half of the error_rate showing in the table.
+  <table class="table" style="text-align: left;">
+  <thead>
+  <tr>
+  <th>Type</th>
+  <th>Overlap</th>
+  <th>error_rate, per bp</th>
+  </tr>
+  </thead>
+  <tbody>
+  <tr>
+  <td>4000 VS 4000</td>
+  <td>65%</td>
+  <td>0.00026</td>
+  </tr>
+  <tr>
+  <td>4000 VS Novaseq</td>
+  <td>72%</td>
+  <td>0.00014</td>
+  </tr>
+  <tr>
+  <td>Novaseq VS Novaseq</td>
+  <td>69%</td>
+  <td>0.00019</td>
+  </tr>
+  </tbody>
+  </table>
+</div>
+<!--
+<div>
+  <h2>4K fastqc result:</h2>
+  <iframe src="LE_15009_Maize_54_S72_L001_R1_001_fastqc.html" width=100% height=800 style="border:2px solid grey;"> </iframe>
+ <p>
+ <hr>
+  <h2>NovaSeq fastqc result:</h2>
+  <iframe src="LE_15009_Maize_54_S72_L001_R1_001_fastqc_nova.html" width=100% height=800 style="border:2px solid grey;"> </iframe>
+</div>
+-->
+</div>
+</body>
+</html>

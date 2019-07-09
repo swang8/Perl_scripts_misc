@@ -1,0 +1,96 @@
+<html>
+<head>
+<style>
+.red_square {
+  height: 30px;
+  width: 30px;
+  background-color: red;
+}
+.blue_square {
+  height: 30px;
+  width: 30px;
+  background-color: blue;
+}
+.green_square {
+  height: 30px;
+  width: 30px;
+  background-color: green;
+}
+.black_square {
+  height: 30px;
+  width: 30px;
+  background-color: black;
+}
+
+</style>
+<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
+<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy" crossorigin="anonymous"></script><head>
+
+<script>
+
+var x = 0;
+function Slideshow_forward(){
+    x = x + 10;
+    if (x > 6000) x=0;
+    var s = x + "";
+    while (s.length < 4) s = "0" + s;
+    console.log(s);
+    document.getElementById("img").src="pngs/step_"+s+".png";
+    document.getElementById("name").innerHTML="pngs/step_"+s+".png";
+}
+
+function Slideshow_backward(){
+    x = x - 10;
+    if (x < 0) x = 0;
+    var s = x + "";
+    while (s.length < 4) s = "0" + s;
+    console.log(s);
+    document.getElementById("img").src="pngs/step_"+s+".png";
+    document.getElementById("name").innerHTML="pngs/step_"+s+".png";
+}
+
+window.onload = function(){
+  document.getElementById ("button-click-forward").addEventListener ("click", Slideshow_forward, false);
+  document.getElementById ("button-click-backward").addEventListener ("click", Slideshow_backward, false);
+}
+</script>
+</head>
+<body>
+<div class="container">
+  <div><h1>Impute missing genotyping data with Deep Image Prior</h1><hr></div>
+  <div>
+      <h2>Original genotyping data for 500 markers of 200 samples</h2>
+      <div id="image">
+        <img src="m500.png" width=100% />
+      </div>
+	<br>
+      <div class="row">
+          <div class="red_square"></div><p>0/0</p>&nbsp&nbsp
+          <div class="green_square"></div><p>0/1</p>&nbsp&nbsp
+          <div class="blue_square"></div><p>1/1</p>&nbsp&nbsp
+          <div class="black_square"></div><p>missing</p>&nbsp&nbsp
+       </div>
+  </div>
+ <hr> 
+  <div id="slideshow_wrapper">
+      <h2>Predicted (imputed) by Deep Image Prior</h2>
+      <div>
+      <h3 id="name">pngs/step_0000.png</h3>
+      <h4 id="name">Total: 6000 steps</h4>
+      </div>
+      <div id="image">
+          <img id="img" src="pngs/step_0000.png" width=100%/>
+          <hr>
+          <div id="slideshow_button_right" class="row">
+              <button id="button-click-backward" type="button" class="btn btn-dark">Previous</button>&nbsp&nbsp&nbsp&nbsp
+              <button id="button-click-forward" type="button" class="btn btn-dark">Next</button> &nbsp&nbsp&nbsp&nbsp
+          </div>
+      </div>
+  
+  </div>
+
+</div>
+</body>
+</html>

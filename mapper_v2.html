@@ -1,0 +1,131 @@
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en-US" xml:lang="en-US">
+<head>
+<title>gbs_map</title>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+  <style>
+ #container{
+
+  width: 600pt;
+
+  background-color: #F9F9F9;
+
+  margin: auto;
+
+  padding: 10px;
+
+}
+body{
+  background-color: #f9f9f9;
+}
+
+#output {
+  font: bold 10px Georgia, serif;
+}
+
+#status {
+  float: right;
+  animation-duration: 3s;
+  animation-name: slidein;
+  animation-iteration-count: infinite;
+  animation-direction: alternate;
+}
+
+@KeFrames slidein {
+  from {
+    margin-left: 100%;
+    width = 300%;
+  }
+
+  to {
+    margin-left: 0%;
+    width: 100%;
+  }
+  
+}
+
+</style>
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+<script src="https://code.jquery.com/jquery-1.10.2.js"></script>
+<script>
+// Attach a submit handler to the form
+$(document).ready(function() {
+  $( '#MainForm' ).submit(function( event ) {
+   
+    // Stop form from submitting normally
+    event.preventDefault();
+    var d = new Date();
+    var output_str = "Log:<p>" + d.toUTCString() + "  Job sumitted.<br>";
+    document.getElementById("mesg").innerHTML = "<p>Job is running. Please hold on ...</p>-- No great thing is suddenly done. Don't you agree?<hr>";
+    $("#mesg").css('outline', 'none !important').attr("tabindex", -1).focus();
+    document.getElementById("output").innerHTML = output_str + "<p></p><br><hr>";
+    // Get some values from elements on the page:
+    var url = "gbs_map_v2.cgi";
+    //var formData = new FormData($(this)[0]);
+    var formData = new FormData(this);
+    //mfor ( var p of formData){console.log(p)}
+    console.log(formData);
+    $.ajax({
+      url: url,
+      type: 'POST',
+      //timeout: 600000, //10seconds
+      data: formData,
+      processData: false,
+      contentType: false,
+      success: function(data){
+         //alert("Successful done!");
+         var json = data;
+         console.log(json);
+         var d = new Date();
+         var download_url = d.toUTCString() + " Job finished.<br><hr>";
+         output_str = output_str + download_url;
+         document.getElementById("mesg").innerHTML = "Job is done. Please download your results from " + "<a style=\"color:blue;font-size:20px;\" href= " + json["url"] + ">" + "this link</a>.<p><hr>";
+         document.getElementById("output").innerHTML = output_str;
+      }
+    });
+  });
+});
+</script>
+</head>
+<body>
+
+<div id="container">
+<div class="form-group">
+<h4>
+This simple tool is made for maping GBS tags (or any sequences) to the flow-sorted Chinese Spring (CS) survery sequences (KFX Mayer, et al. 2014) and the popseq sequencing data (Chapman, et al. 2015). More wheat reference will be included if available.</h4>
+<p>Any suggestions please contact: Shichen Wang, wangsc AT tamu edu.</p>
+<hr>
+<p>
+<h5>Enter your tags below in comma-delimited format (NO header):</h5>
+<strong>Example:</strong><br>
+<pre>
+1,TGCAGAAAAAACAGAAAGTCAAATCTGAGCACAAAAAATAGAGTCAAAATGAAGCTCCGTATCT
+2,TGCAGAAAAAACGCTTCTGACACAACGTGCCGAGAACGCTGAAGCCGCCCTTGAAGAGGTTACG,7A
+3,TGCAGAAAAAATCAGTTTGCATTTACAACACATGAACACCAAGTCTGACATAGGTAGACCATCT
+4,TGCAGAAAAACGAAGATGGCGATGACATGGTCATGGCATACCCGAAGCTGGTCGAGCTATGTTC,7B
+</pre>
+<strong>Only the first three columns will be used. <br>
+First column is <code>Tag_ID</code>(the IDs would need to be unique); <br>
+Second column is <code>Tag_sequence</code>; <br>
+Third column is the expected <code>Chromosome_ID </code>(optional, may be blank)</strong><p>
+<i>Note: Time out might happen if submit >40,000 tags.</i><br>
+<BR>
+You may paste your data here:<br>
+<FORM  METHOD = POST NAME="MainForm" id="MainForm" ENCTYPE= "multipart/form-data" >
+<textarea name="SEQUENCE" rows=10 cols=100>
+</textarea>
+<BR>
+<p>Or load it from a file (should be the same format as mentioned in the example).<br>
+Click to select:</p>
+<INPUT class="btn btn-default"  TYPE="file" NAME="SEQFILE">
+<P><br>
+<INPUT TYPE="button" class="btn btn-default" VALUE="Clear sequence" onClick="MainForm.SEQUENCE.value='';MainForm.SEQFILE.value=''; MainForm.SEQUENCE.focus();">
+<INPUT TYPE="submit" class="btn btn-default" VALUE="Search">
+<HR>
+</div>
+</FORM>
+<div id="mesg"> </div> 
+<div id="output"></div>
+</div>
+
+</body>
+</html>

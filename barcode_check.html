@@ -1,0 +1,159 @@
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en-US" xml:lang="en-US">
+<head>
+<title>Check Barcodes</title>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+  <style>
+ #container{
+
+  width: 700pt;
+
+  background-color: #F9F9F9;
+
+  margin: auto;
+
+  padding: 10px;
+
+}
+body{
+  background-color: #f9f9f9;
+}
+
+#output {
+  font: bold 10px Georgia, serif;
+}
+
+#status {
+  float: right;
+  animation-duration: 3s;
+  animation-name: slidein;
+  animation-iteration-count: infinite;
+  animation-direction: alternate;
+}
+
+@KeFrames slidein {
+  from {
+    margin-left: 100%;
+    width = 300%;
+  }
+
+  to {
+    margin-left: 0%;
+    width: 100%;
+  }
+  
+}
+
+</style>
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+<script src="https://code.jquery.com/jquery-1.10.2.js"></script>
+<script>
+// Attach a submit handler to the form
+$.makeTable = function (mydata) {
+            var table = $('<table border=1>');
+	    table.addClass("table")
+            var tblHeader = "<tr>";
+            for (var k in mydata[0]) tblHeader += "<th>" + k + "</th>";
+            tblHeader += "</tr>";
+            $(tblHeader).appendTo(table);
+            $.each(mydata, function (index, value) {
+                var TableRow = "<tr>";
+                $.each(value, function (key, val) {
+                    TableRow += "<td>" + val + "</td>";
+                });
+                TableRow += "</tr>";
+                $(table).append(TableRow);
+            });
+            return ($(table));
+        };
+$(document).ready(function() {
+  $( '#MainForm' ).submit(function( event ) {
+   
+    // Stop form from submitting normally
+    event.preventDefault();
+    var d = new Date();
+    var output_str = "Log:<p>" + d.toUTCString() + "  Job sumitted.<br>";
+    document.getElementById("output").innerHTML = "";
+    document.getElementById("mesg").innerHTML = "<p><p>Your slave is working hard on this. Please hold on ...</p></p>";
+    $("#mesg").css('outline', 'none !important').attr("tabindex", -1).focus();
+    //document.getElementById("output").innerHTML = output_str + "<p></p><br><hr>";
+    // Get some values from elements on the page:
+    var url = "barcode_check.cgi";
+    //var formData = new FormData($(this)[0]);
+    var formData = new FormData(this);
+    //mfor ( var p of formData){console.log(p)}
+    console.log(formData);
+    $.ajax({
+      url: url,
+      type: 'POST',
+      timeout: 6000000, //10seconds
+      data: formData,
+      processData: false,
+      contentType: false,
+      success: function(data){
+         //alert("Successful done!");
+         var json = data;
+	 if (jQuery.isEmptyObject(json)){
+	    document.getElementById("mesg").innerHTML = "<a style=\"color:blue;font-size:20px;\">No conflict barcodes detected, Good Job! </a>";
+            document.getElementById("output").innerHTML = "";
+	 }
+	 else{
+           console.log(json);
+         //document.getElementById("mesg").innerHTML = "Job is done. Please download your results from " + "<a style=\"color:blue;font-size:20px;\" href= " + json["url"] + ">" + "this link</a>.<p><hr>";
+	    document.getElementById("mesg").innerHTML = "<a style=\"color:red;font-size:20px;\">Whoops, conflict barcodes detected!</a><p><hr>";
+	    var table = $.makeTable(json);
+            document.getElementById("output").innerHTML = "";
+	    $(table).appendTo("#output");	    
+	 }
+      }
+    });
+  });
+});
+</script>
+</head>
+<body>
+
+<div id="container">
+<div class="form-group">
+<h4>Check if barcodes are conflicting with each other.</h4>
+<hr>
+<p>
+<h5>Enter your barcodes below (for dual barcodes, can be comma, plus, underscore, dash or space delimited format):</h5>
+<strong>Example:</strong><br>
+<pre>
+ATGCCGC,ACGTACGGC
+ATGCCGC+ACGTACGGC
+ATGCCGC_ACGTACGGC
+ACACGG-CGACGATGCAT
+ACGCGGC  CACAGTTCGA
+</pre>
+<br>
+</strong>
+You may paste your barcodes here:<br>
+<FORM  METHOD = POST NAME="MainForm" id="MainForm" ENCTYPE= "multipart/form-data" >
+<textarea name="SEQUENCE" rows=7 cols=100>
+</textarea>
+<br>
+<p>
+<p>
+Cutoff for the number of mismatches:<br>(if select 3, barcode pairs with <= 3 mismatches will be reported as conflicted)<br>
+<select name=selection>
+<option> 1 </option>
+<option> 2 </option>
+<option selected="selected"> 3 </option>
+<option> 4 </option>
+<option> 5 </option>
+<option> 6 </option>
+</select>
+</p>
+<BR>
+<INPUT TYPE="button" class="btn btn-default" VALUE="Clear data" onClick="MainForm.SEQUENCE.value='';MainForm.SEQFILE.value=''; MainForm.SEQUENCE.focus();">
+<INPUT TYPE="submit" class="btn btn-default" VALUE="Check my barcodes">
+<HR>
+</div>
+</FORM>
+<div id="mesg"> </div> 
+<div id="output"></div>
+</div>
+
+</body>
+</html>

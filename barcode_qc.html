@@ -1,0 +1,199 @@
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en-US" xml:lang="en-US">
+<head>
+<title>Check Barcodes</title>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+  <style>
+ #container{
+
+  width: 700pt;
+
+  background-color: #F9F9F9;
+
+  margin: auto;
+
+  padding: 10px;
+
+}
+body{
+  background-color: #f9f9f9;
+}
+
+#output {
+  font: bold 10px Georgia, serif;
+}
+
+#status {
+  float: right;
+  animation-duration: 3s;
+  animation-name: slidein;
+  animation-iteration-count: infinite;
+  animation-direction: alternate;
+}
+
+@KeFrames slidein {
+  from {
+    margin-left: 100%;
+    width = 300%;
+  }
+
+  to {
+    margin-left: 0%;
+    width: 100%;
+  }
+  
+}
+
+</style>
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+<script src="https://code.jquery.com/jquery-1.10.2.js"></script>
+<script>
+// Attach a submit handler to the form
+$.makeTable = function (mydata) {
+            var table = $('<table border=1>');
+	    table.addClass("table")
+            var tblHeader = "<tr>";
+            for (var k in mydata[0]) tblHeader += "<th>" + k + "</th>";
+            tblHeader += "</tr>";
+            $(tblHeader).appendTo(table);
+            $.each(mydata, function (index, value) {
+                var TableRow = "<tr>";
+                $.each(value, function (key, val) {
+                    TableRow += "<td>" + val + "</td>";
+                });
+                TableRow += "</tr>";
+                $(table).append(TableRow);
+            });
+            return ($(table));
+        };
+$(document).ready(function() {
+  $( '#MainForm' ).submit(function( event ) {
+   
+    // Stop form from submitting normally
+    event.preventDefault();
+    var d = new Date();
+    var output_str = "Log:<p>" + d.toUTCString() + "  Job sumitted.<br>";
+    document.getElementById("output").innerHTML = "";
+    document.getElementById("mesg").innerHTML = "<p><p>Your slave is working hard on this. Please hold on ...</p></p>";
+    $("#mesg").css('outline', 'none !important').attr("tabindex", -1).focus();
+    //document.getElementById("output").innerHTML = output_str + "<p></p><br><hr>";
+    // Get some values from elements on the page:
+    var url = "barcode_qc_v0.21.cgi";
+    //var formData = new FormData($(this)[0]);
+    var formData = new FormData(this);
+    //mfor ( var p of formData){console.log(p)}
+    console.log(formData);
+    $.ajax({
+      url: url,
+      type: 'POST',
+      //timeout: 600000, //10seconds
+      data: formData,
+      processData: false,
+      contentType: false,
+      success: function(data){
+         //alert("Successful done!");
+         var json = data;
+	 console.log(json)
+	 // if (jQuery.isEmptyObject(json)){
+	 //    document.getElementById("mesg").innerHTML = "<a style=\"color:blue;font-size:20px;\">No conflict barcodes detected, Good Job! </a>";
+         //    document.getElementById("output").innerHTML = "";
+	 // }
+	 // else{
+         //   console.log(json);
+         // //document.getElementById("mesg").innerHTML = "Job is done. Please download your results from " + "<a style=\"color:blue;font-size:20px;\" href= " + json["url"] + ">" + "this link</a>.<p><hr>";
+	 //    document.getElementById("mesg").innerHTML = "<a style=\"color:red;font-size:20px;\">Whoops, conflict barcodes detected!</a><p><hr>";
+	 //    var table = $.makeTable(json);
+         //    document.getElementById("output").innerHTML = "";
+	 //    $(table).appendTo("#output");	    
+	 // }
+	var myjson = json;
+	console.log(myjson[0])
+	if (myjson[0].errors > 0){
+		document.getElementById("mesg").innerHTML = "<a style=\"color:red;font-size:20px;\">Whoops, there are errors detected!</a><p><hr>";
+	}else {
+		document.getElementById("mesg").innerHTML = "<a style=\"color:blue;font-size:20px;\">Good Job! Everything seems fine.</a><p><hr>";
+	}
+        document.getElementById("output").innerHTML = "<h4>Please download the report here: <a target=\"_blank\" href=\"" + myjson[0].report + "\">report page</a><h4><hr>";
+	
+      }
+    });
+  });
+});
+</script>
+</head>
+<body>
+
+<div id="container">
+<h4>Check the compatibility of barcodes </h4>
+<hr>
+<p>
+<h5>Enter the inforamtion in the text box below (must be in <code>csv</code> format. Lines start with # will be ignored).</h5>
+<strong>Example:</strong><br>
+<pre>
+Sample,Project,Barcode_number,Barcode_id,i7,i5,Barcode_source,
+awesome_sample1,191000Pro,1,7P1_5P1,ATTACTCG,TATAGCCT,neb_CDI,
+awesome_sample2,191000Pro,2,7P1_5P2,ATTACTCG,TATAGCCT,neb_CDI,
+awesome_sample3,191000Pro,3,7P1_5P3,ATTACTCG,TATAGCCT,neb_CDI,
+TAMU_B1,19031Ind,1,Barcode Adapter 1,ATCTAGCCGGCC,,perkin_HT_S1,
+TAMU_B2,19031Ind,13,Barcode Adapter 13,AAGCGTACGTCC,,perkin_HT_S1,
+TAMU_B3,19031Ind,25,Barcode Adapter 25,CTCCGATCGTCC,,perkin_HT_S1,
+TAMU_B4,19031Ind,37,Barcode Adapter 37,TCGGGAAGGTCC,,perkin_HT_S1,
+TAMU_B5,19031Ind,49,Barcode Adapter 49,TTTAGTCAGTCC,,perkin_HT_S1,
+TAMU_B6,19031Ind,61,Barcode Adapter 61,GCCTCGAAGTCC,,perkin_HT_S1,
+TAMU_B6,19031Ind,61,Barcode Adapter 61,GCCTCGAAGTCC,,perkin_HT_S1,
+TAMU_B7,19031Ind,73,Barcode Adapter 73,GTTGACTAGTCC,,perkin_HT_S1,
+</pre>
+<p>Must have headers: <strong> Sample, Project, Barcode_number, Barcode_id, i7, i5, Barcode_source </strong> </p>
+<strong>Barcode source should be one of the following:</strong>
+<ol>
+<li>neb_CDI, <a href="https://raw.githubusercontent.com/swang8/barcodes/master/NEB_NEXT_CDI_Combined.csv">https://raw.githubusercontent.com/swang8/barcodes/master/NEB_NEXT_CDI_Combined.csv</a></li>
+<li>perkin_HT_S1, <a href="https://raw.githubusercontent.com/swang8/barcodes/master/PerkinElmer_NextFlex_HT_SI.csv">https://raw.githubusercontent.com/swang8/barcodes/master/PerkinElmer_NextFlex_HT_SI.csv</a></li>
+<li>perkin_UDI, <a href="https://raw.githubusercontent.com/swang8/barcodes/master/PerkinElmer_NextFlex_UDI.csv">https://raw.githubusercontent.com/swang8/barcodes/master/PerkinElmer_NextFlex_UDI.csv</a></li>
+<li>perkin_UDI_4K, <a href="https://raw.githubusercontent.com/swang8/barcodes/master/PerkinElmer_NextFlex_UDI_4000.csv">https://raw.githubusercontent.com/swang8/barcodes/master/PerkinElmer_NextFlex_UDI_4000.csv</a></li>
+<li>txgen_dulig, <a href="https://raw.githubusercontent.com/swang8/barcodes/master/TxGen_DuLig_CDI_Combined.csv">https://raw.githubusercontent.com/swang8/barcodes/master/TxGen_DuLig_CDI_Combined.csv</a></li>
+</ol>
+<br>
+<FORM  METHOD = POST NAME="MainForm" id="MainForm" ENCTYPE= "multipart/form-data" >
+<div class="form-group">
+You may paste your barcodes here:<br>
+<textarea name="SEQUENCE" class="md-textarea form-control" rows="7"></textarea>
+</div>
+<br>
+<p>
+<p>
+ <div class="form-group">
+Check conflicts up to this amount of mismatches (if select 3, barcode pairs with 0, 1, 2, or 3 mismatches will be reported as conflicted):<br> 
+<select name=selection>
+<option> 1 </option>
+<option selected="selected"> 2 </option>
+<option > 3 </option>
+<option> 4 </option>
+<option> 5 </option>
+<option> 6 </option>
+</select>
+</div>
+<div class="form-check">
+<input type="checkbox" class="form-check-input" name="check" id="plate" value="1" >Check Plate Position<br>
+<small id="helpMsg" class="form-text text-muted">For this to work, the column "Plate_position" is requried in the CSV.</small>
+</div>
+</p>
+<div class="form-group">
+<INPUT TYPE="button" class="btn btn-default" VALUE="Clear data" onClick="MainForm.SEQUENCE.value='';MainForm.SEQFILE.value=''; MainForm.SEQUENCE.focus();">
+</div>
+<p></p>
+ <div class="form-group">
+<p>Or load it from a file (should be the same format as mentioned in the example).<br>
+Click to select:</p>
+<INPUT class="form-control-file"  TYPE="file" NAME="SEQFILE">
+<br>
+</div>
+ <div class="form-group">
+<INPUT TYPE="submit" class="btn btn-primary" VALUE="Check my barcodes">
+</div>
+<HR>
+</FORM>
+<div id="mesg"> </div> 
+<div id="output"></div>
+</div>
+
+</body>
+</html>

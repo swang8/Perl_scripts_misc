@@ -1,0 +1,41 @@
+<html>
+<head>
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+</head>
+<body>
+<div class="container">
+<div class="jumbotron">
+  <div>
+  <h3>Novaseq VS 4000</h3>
+   <h4>How:</h4> 
+	<ol>
+	<li>Took a sample that have been sequenced on 4000 twice, compare the overlapping reads and detect variations between the two batch of data (potential error rate)</li>
+        <li>Took a sample that have been sequenced on 4000 and NovaSeq, compare the overlapping reads and detect variations between the two batch of data (potential error rate)</li>
+	</ol>
+  </div>
+  <h4>Result:</h4>
+  <table class="table">
+  <thead>
+  <tr>
+  <th>Type</th>
+  <th>Overlap</th>
+  <th>error_rate</th>
+  </tr>
+  </thead>
+  <tbody>
+  <tr>
+  <td>4000 VS 4000</td>
+  <td>65%</td>
+  <td>0.00026</td>
+  </tr>
+  <tr>
+  <td>4000 VS Novaseq</td>
+  <td>72%</td>
+  <td>0.00014</td>
+  </tr>
+  </tbody>
+  </table>
+</div>
+</div>
+</body>
+</html>

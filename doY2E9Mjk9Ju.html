@@ -1,0 +1,79 @@
+
+<html lang="en">
+<head>
+  <title></title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+  <style>
+  pre {
+    height: auto;
+    max-height: 500px;
+    overflow: auto;
+    background-color: #eeeeee;
+    word-break: normal !important;
+    word-wrap: normal !important;
+    white-space: pre !important;
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="row">
+        <div id="logo" class="col-xs-3">
+                <a href="http://agriliferesearch.tamu.edu/"><img src="/media/image/logo.png" alt="Texas A&amp;M AgriLife Research" class="img-responsive"/></a>
+        </div>
+
+        <div id="logo" class="col-xs-9">
+                <a href="http://txgen.tamu.edu/"><img src="/media/image/txgen_logo2.png" alt="Genomics and Bioinformatics Services" style="width:30%;" class="img-responsive pull-right"/></a>
+        </div>
+  </div>
+<hr>    
+    
+<h2>Check for consistency Id vs Name vs Position in Plate </h2>
+<pre>
+<p>awesome_sample1, 191000Pro, 1, 7P1_5P1, ATTACTCG, TATAGCCT, NEB_CDI, Index number matching, i7 matching, i5 matching</p>
+<p>awesome_sample2, 191000Pro, 2, 7P1_5P2, ATTACTCG, TATAGCCT, NEB_CDI, Index number matching, i7 matching, i5 NOT matching</p>
+<p>awesome_sample3, 191000Pro, 3, 7P1_5P3, ATTACTCG, TATAGCCT, NEB_CDI, Index number matching, i7 matching, i5 NOT matching</p>
+<p>TAMU_B1, 19031Ind, 1, BarcodeAdapter1, ATCTAGCCGGCC, , PERKIN_HT_S1, Index number matching, i7 matching, i5 empty</p>
+<p>TAMU_B2, 19031Ind, 13, BarcodeAdapter13, AAGCGTACGTCC, , PERKIN_HT_S1, Index number matching, i7 matching, i5 empty</p>
+<p>TAMU_B3, 19031Ind, 25, BarcodeAdapter25, CTCCGATCGTCC, , PERKIN_HT_S1, Index number matching, i7 matching, i5 empty</p>
+<p>TAMU_B4, 19031Ind, 37, BarcodeAdapter37, TCGGGAAGGTCC, , PERKIN_HT_S1, Index number matching, i7 matching, i5 empty</p>
+<p>TAMU_B5, 19031Ind, 49, BarcodeAdapter49, TTTAGTCAGTCC, , PERKIN_HT_S1, Index number matching, i7 matching, i5 empty</p>
+<p>TAMU_B6, 19031Ind, 61, BarcodeAdapter61, GCCTCGAAGTCC, , PERKIN_HT_S1, Index number matching, i7 matching, i5 empty</p>
+<p>TAMU_B7, 19031Ind, 73, BarcodeAdapter73, GTTGACTAGTCC, , PERKIN_HT_S1, Index number matching, i7 matching, i5 empty</p>
+</pre>
+<h2>Barcode conflict checking</h2>
+<a style="color:red">There are conflicts detected!!</a><br>
+<ol>
+<li><table>
+<tr>
+<th>barcode</th>
+<td><span>ATTACTCG_TATAGCCT</span>
+</td>
+</tr>
+<tr>
+<th>potential_conflict</th>
+<td><span>ATTACTCG_TATAGCCT_0_0,ATTACTCG_TATAGCCT_0_0</span>
+</td>
+</tr>
+</table>
+</li>
+<li><table>
+<tr>
+<th>barcode</th>
+<td><span>ATTACTCG_TATAGCCT</span>
+</td>
+</tr>
+<tr>
+<th>potential_conflict</th>
+<td><span>ATTACTCG_TATAGCCT_0_0</span>
+</td>
+</tr>
+</table>
+</li>
+</ol>
+<hr>
+Report: http://download.txgen.tamu.edu/shichen/doY2E9Mjk9Ju.html
