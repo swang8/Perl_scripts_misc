@@ -30,16 +30,7 @@ my $header=qq(<head>
             <body>
             <div class="container">
               <div class="row">
-                      <div id="logo" class="col-xs-3">
-                                 <a href="http://txgen.tamu.edu/" target="_blank"><img src="http://www.txgen.tamu.edu/wp-content/uploads/2019/07/txgen_new_transparent_v2_463x213.png" alt="Genomics and Bioinformatics Services" style="width:90%;" class="img-responsive"/></a>
-                      </div>
-                      <div id="logo" class="col-xs-6">
-
-                      </div>
-
-                      <div id="logo" class="col-xs-3">
-                                 <a href="http://agriliferesearch.tamu.edu/" target="_blank"><img src="http://www.txgen.tamu.edu/wp-content/uploads/2019/07/logo_agrilife.png" alt="Texas A&amp;M AgriLife Research" class="img-responsive pull-right"/></a>
-                      </div>
+                              <a href="http://txgen.tamu.edu/" target="_blank"><img src="https://www.txgen.tamu.edu/wp-content/uploads/2019/07/Title_Large_transparent.png" alt="Genomics and Bioinformatics Services" style="width:100%;" class="img-responsive"/></a>
               </div>  
                                                                               <hr>
                                                                                 <h2>Project information</h2>
