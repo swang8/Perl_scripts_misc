@@ -52,12 +52,20 @@ $.makeTable = function (mydata) {
             var table = $('<table border=1>');
 	    table.addClass("table")
             var tblHeader = "<tr>";
-            for (var k in mydata[0]) tblHeader += "<th>" + k + "</th>";
+	    var header = Object.keys(mydata[0]).sort(); console.log('header:'+ header)
+            for (var k in header) {tblHeader += "<th>" + header[k] + "</th>";console.log('k:' + k)}
             tblHeader += "</tr>";
             $(tblHeader).appendTo(table);
             $.each(mydata, function (index, value) {
+		console.log("index; " + index);
+		console.log("value; " + Object.keys(value));
                 var TableRow = "<tr>";
-                $.each(value, function (key, val) {
+		value_sorted={};
+		Object.keys(value).sort().forEach(function(key) {
+  			value_sorted[key] = value[key];
+		});
+		console.log('sorted_v: '+ Object.keys(value_sorted));
+                $.each(value_sorted, function (key, val) {
                     TableRow += "<td>" + val + "</td>";
                 });
                 TableRow += "</tr>";
@@ -77,7 +85,7 @@ $(document).ready(function() {
     $("#mesg").css('outline', 'none !important').attr("tabindex", -1).focus();
     //document.getElementById("output").innerHTML = output_str + "<p></p><br><hr>";
     // Get some values from elements on the page:
-    var url = "barcode_check.cgi";
+    var url = "barcode_check_v2.cgi";
     //var formData = new FormData($(this)[0]);
     var formData = new FormData(this);
     //mfor ( var p of formData){console.log(p)}
@@ -99,7 +107,7 @@ $(document).ready(function() {
 	 else{
            console.log(json);
          //document.getElementById("mesg").innerHTML = "Job is done. Please download your results from " + "<a style=\"color:blue;font-size:20px;\" href= " + json["url"] + ">" + "this link</a>.<p><hr>";
-	    document.getElementById("mesg").innerHTML = "<a style=\"color:red;font-size:20px;\">Whoops, conflict barcodes detected!</a><p><hr>";
+	    document.getElementById("mesg").innerHTML = "<a style=\"color:red;font-size:20px;\">Whoops, conflict barcodes detected: " + json.length +  " conflicts!</a><p><hr>";
 	    var table = $.makeTable(json);
             document.getElementById("output").innerHTML = "";
 	    $(table).appendTo("#output");	    
