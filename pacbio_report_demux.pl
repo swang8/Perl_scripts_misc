@@ -8,7 +8,6 @@ use Data::Dumper;
 use Cwd;
 use FindBin;
 use Getopt::Long;
-use Parallel::ForkManager;
 
 my $star_bar = '*' x 80;
 my $usage =  qq ($star_bar
@@ -96,7 +95,7 @@ foreach my $opt (@runs) {
     $dir =~ s/\/$//;
     my $run = basename($dir); # r54092_20160921_211039
     unless (exists $run_id{$run}) {$num_runs ++; $run_id{$run}=1}
-    map{unless (exists $cell_id{$run.":".$_}){ $cell_id{$run.":".$_}=1}  }(@selected_cells);
+    map{unless (exists $cell_id{$run.":".$_}){$cell_id{$run.":".$_}=1}  }(@selected_cells);
     #$dir = Cwd::abs_path($dir);
     print STDERR "Selected cells for run $run : ", @selected_cells >0?join(" ", @selected_cells):"None, will take all detected.", "\n";
 
@@ -111,7 +110,7 @@ foreach my $opt (@runs) {
 
     my %selected = map{$_, 1}@selected_cells;
     @cells = grep{exists $selected{basename($_)} }@cells if @selected_cells > 0;
-    $num_cells += scalar @cells;
+    $num_cells = scalar @cells;
 
     my $output_dir = $report_dir . "/" .  basename($dir);
     mkdir($output_dir) unless -d $output_dir;
@@ -156,7 +155,6 @@ foreach my $opt (@runs) {
         my ($run_start, $stamp_name, $run_id) = ($r->{"WhenCreated"}, $r->{"TimeStampedName"}, $r->{"Name"});
         my $subset_str = `cat $subset_xml`;
         my $lib_cell = $1 if $subset_str=~/pbds\:SubreadSet.*?Name="(.*?)"/;
-        my $subread_count = $1 if $subset_str=~/<pbds:NumRecords>(\d+)<\/pbds:NumRecords>/;
         $lib_cell =~ s/\s+/_/g;
         my ($lib_name, $cell_name) = ($1, $2) if $lib_cell=~/^(.*)\-(Cell\d+)$/;
         print STDERR join("\t", "Test", $lib_cell, $lib_name, $cell_name), "\n";
@@ -172,7 +170,7 @@ foreach my $opt (@runs) {
         my ($poly_read_total, $poly_read_count, $poly_read_mean, $poly_read_N50) = get_polymerase_count($analysis_dir . "/dataset-reports/filter_stats_xml/filter_stats_xml.json");
 
 
-        my ($sub_read_total, $sub_read_N50, $sub_read_mean, $sub_read_count) = get_stats_from_bam_fork($subread_bam, $subread_count);
+        my ($sub_read_total, $sub_read_N50, $sub_read_mean, $sub_read_count) = get_stats_from_bam($subread_bam);
 
         push @summary, [$run, $lib_cell, $poly_read_count, $poly_read_total, $sub_read_count, $sub_read_total];
 
@@ -299,7 +297,7 @@ print $HTML qq(
     <th>Run</th>
     <th>Cell</th>
     <th>Polymerase read count</th>
-    <th>Polymerase read length</th>
+    <th>Polymerase total length</th>
     <th>Subread count</th>
     <th>Subread total length</th>
   </tr>
@@ -402,91 +400,8 @@ sub get_stats_from_bam {
   return($total_length, $N50, $read_mean, $read_count);
 }
 
-sub get_stats_from_bam_fork {
-  my $bam = shift;
-  my $total = shift;
-  my $num_chunk = 30;
-  my $line_per_file = int($total/$num_chunk) + 1;
+sub all_exist {
 
-  # split
-  print STDERR  localtime(time), "\t",  "split bam file $bam\n";
-  #my $tag = split_bam($bam, $line_per_file, $num_chunk);
-  my $tag = "fduvzmoe-s";
-  print STDERR  localtime(time), "\t",  "Done split bam!\n";
-  # process each chunk
-  my %count= ();
-  my $basebam = basename($bam);
-  my @fs=</tmp/${basebam}_${tag}_chunk*>;
-  my @regions=();
-  foreach my $f(@fs){
-    open(my $F, $f) or die $!;
-    while(<$F>){
-        my $id = $1 if /^(\S+)/;
-                       # m54092_161220_211206/4194368/0_11
-        my @p = split /\//, $id;
-        my @arr = split /_/, $p[-1];
-        my $region_len = $arr[1] - $arr[0];
-        push @regions, $region_len
-    }
-    close $F;
-  }
-  return get_stats(@regions)
-}
-
-sub split_bam {
-  my ($bam, $line, $numChunk) = @_;
-  my $tag = random_str(10);
-  my $pm = Parallel::ForkManager->new($numChunk);
-  DATA_LOOP:
-  foreach my $n (1..$numChunk) {
-        my $pid = $pm->start and next DATA_LOOP;
-        my $start = ($n-1)*$line + 1;
-        my $out = "/tmp/" . basename($bam) . "_" . $tag . "_chunk" . $n;
-        open (my $OUT , ">$out") or die $!;
-        my $end = $n * $line;
-        my $samtools =  `which samtools`   || '/home/shichen.wang/Tools/bin/samtools';
-        chomp $samtools;
-        open (my $IN, "$samtools view $bam |");
-        my $current = 0;
-        while (<$IN>){
-          $current ++;
-          last if $current > $end;
-          my $str=$1 if /^(\S+)/;
-          print $OUT $str, "\n" if $current >= $start;
-        }
-        close $IN;
-
-        $pm->finish; # Terminates the child process
-  }
-  $pm->wait_all_children;
-
-  return $tag;
-}
-
-sub get_stats {
-   my @arr = @_;
-   @arr = sort {$a <=> $b} @arr;
-   my $tot = 0; map{$tot += $_}@arr;
-   my $N50 = $arr[int((scalar @arr)/2)];
-   my $mean = int($tot / (scalar @arr));
-   return($tot, $N50, $mean, (scalar @arr));
-}
-
-sub get_stats_from_chunk {
-    my $f = shift;
-    print STDERR "chunk file: $f\n";
-    my $hash_ref = shift;
-    my $chunk_id = $1 if $f=~/chunk(\d+)/;
-    open(my $IN, $f) or die $!;
-    while(<$IN>){
-        my $id = $1 if /^(\S+)/;
-        # m54092_161220_211206/4194368/0_11
-        my @p = split /\//, $id;
-        my @arr = split /_/, $p[-1];
-        my $region_len = $arr[1] - $arr[0];
-        push @{$hash_ref->{$chunk_id}}, $region_len;
-    }
-    close $IN;
 }
 
 sub get_properties {

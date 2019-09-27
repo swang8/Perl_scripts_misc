@@ -25,7 +25,7 @@ avg_miss=$(perl -ne 'next if /rate/; $n++; chomp; $m+= $_; END{print sprintf("%.
 
 perl -ne '@t=split /\s+/,$_; if(/\#CHR/){@arr=@t} next if /\#/; map{$h{$arr[$_]}++; $m{$arr[$_]}++ if $t[$_]=~/\.\/\./ }9..$#t; END{map{print join("\t", $_,  $h{$_}, $m{$_}, $m{$_}/$h{$_}), "\n"}keys %h;}' $OUTPUT >${OUTPUT}_sample_missing_rate.txt
 
-more ${OUTPUT}_sample_missing_rate.txt | cut -f 4  >sample_missing.txt
+cat  ${OUTPUT}_sample_missing_rate.txt | cut -f 4  >sample_missing.txt
 avg_miss_sample=$(perl -ne 'next if /rate/; $n++; chomp; $m+= $_; END{print sprintf("%.2f", $m/$n), "\n"}' sample_missing.txt)
 
 Rscript ~/pl_scripts/histogram.R  -i Missing_rate.txt -e 1 -t "SNP missing rate" -s "No imputation, average missing rate: $avg_miss" -x "Missing rate"
@@ -56,8 +56,8 @@ avg_miss_GP8=$(perl -ne 'next if /rate/; $n++; chomp; $m+= $_; END{print sprintf
 perl -ne '@t=split /\s+/,$_; if(/\#CHR/){@arr=@t} next if /\#/; map{$h{$arr[$_]}++; $m{$arr[$_]}++ if $t[$_]=~/\.\/\./ }9..$#t; END{map{print join("\t", $_,  $h{$_}, $m{$_}, $m{$_}/$h{$_}), "\n"}keys %h;}' imputed/*GPfiltered_0.9.vcf  >imputed_GP0.9_sample_missing_rate.txt
 perl -ne '@t=split /\s+/,$_; if(/\#CHR/){@arr=@t} next if /\#/; map{$h{$arr[$_]}++; $m{$arr[$_]}++ if $t[$_]=~/\.\/\./ }9..$#t; END{map{print join("\t", $_,  $h{$_}, $m{$_}, $m{$_}/$h{$_}), "\n"}keys %h;}' imputed/*GPfiltered_0.8.vcf  >imputed_GP0.8_sample_missing_rate.txt
 
-more imputed_GP0.9_sample_missing_rate.txt | cut -f 4  >GP_0.9_sample_missing.txt
-more imputed_GP0.8_sample_missing_rate.txt | cut -f 4  >GP_0.8_sample_missing.txt
+cat  imputed_GP0.9_sample_missing_rate.txt | cut -f 4  >GP_0.9_sample_missing.txt
+cat  imputed_GP0.8_sample_missing_rate.txt | cut -f 4  >GP_0.8_sample_missing.txt
 avg_miss_GP9_sam=$(perl -ne 'next if /rate/; $n++; chomp; $m+= $_; END{print sprintf("%.2f", $m/$n), "\n"}' GP_0.9_sample_missing.txt)
 avg_miss_GP8_sam=$(perl -ne 'next if /rate/; $n++; chomp; $m+= $_; END{print sprintf("%.2f", $m/$n), "\n"}' GP_0.8_sample_missing.txt)
 

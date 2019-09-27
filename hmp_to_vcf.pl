@@ -25,17 +25,17 @@ while(<IN>){
 	my @geno = ();
 	map{if(/N/){push @geno, "./."}elsif(/$alleles[0]/){push @geno, "0/0:1,0,0"}elsif(/$alleles[1]/){push @geno, "1/1:0,0,1"}elsif(/H/){push @geno, "0/1:0,1,0"}else{push @geno, "0/1:1,1,0"} }@t[11..$#t];
 	$t[3] = 1 if $t[3] <= 0;
-	$t[3] = int($t[3] * 100000);
+	#$t[3] = int($t[3] * 100000);
 	##print join("\t", @t[2,3,0], @alleles, ".", ".", ".", "GT:PL", @geno), "\n";
 	push @arr, [ @t[2,3,0], @alleles, ".", ".", ".", "GT:PL", @geno ];
 }
 close IN;
 
-@arr = sort{$a->[0] <=> $b->[0] || $a->[1] <=> $b->[1]}@arr;
+@arr = sort{$a->[0] cmp $b->[0] || $a->[1] <=> $b->[1]}@arr;
 my ($chr, $pre_pos) = (0, 0);
 map{
   my @p = @$_;
-  if($p[0] == $chr){
+  if($p[0] eq $chr){
     if($p[1] <= $pre_pos){$p[1] = $pre_pos + 1;}
     $pre_pos = $p[1];
   }

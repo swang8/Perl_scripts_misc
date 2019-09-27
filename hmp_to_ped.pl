@@ -26,7 +26,9 @@ while(<IN>){
 		@arr = @t;
 		next;
 	}
-	push @pos, join("\t", $t[2], $t[0], 0, $t[3]);	
+    my $chr = $t[2];
+    $chr=~s/Chr//g; $chr +=0;
+	push @pos, join("\t", $chr, $t[0], 0, $t[3]);	
 	map{
 		if(length $t[$_] == 1) {
 			push @{$res{$arr[$_]}}, join(" ", @t[$_, $_]);

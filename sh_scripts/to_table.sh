@@ -1,0 +1,1 @@
+perl -ne 'chomp; @t=split /\s+/,$_; $n++; if($n==1){print "<table class=\"table table-striped\">\n", "<thead><tr><th>No.</th>\n"; @arr=map{"<th>" . $_ . "</th>" }@t; print join("\n", @arr), "\n", "</tr></thead>\n"; next}  $m++;  @arr=map{"<td>".$_. "</td>"}@t; print "<tr>\n", join("\n", "<td>".$m."</td>", @arr), "\n", "</tr>\n"; END{print "</table>\n"}' $1 

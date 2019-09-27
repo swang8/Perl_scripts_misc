@@ -1,0 +1,1 @@
+perl -ne '$n++; chomp; @t=split /,/, $_; if($n==1){@arr=@t; next} map{push @{$h{$arr[$_]}}, $t[$_]}13..$#t; END{ @mks=map{"mk".$_.".a", "mk".$_.".b"}1..($n-1); print join("\t", "ID", @mks),"\n" ;  map{$acc=$_;  @p=@{$h{$_}}; @all=(); map{@pp=split //, $_; if(/N/){push @all, ("", "")}else{ push @all, @pp}}@p; print join("\t", $acc, @all) ,"\n" }keys %h}' $1 >${1}.corehunter.txt

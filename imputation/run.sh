@@ -34,4 +34,11 @@ for i in `seq 1 $cycles`; do
   perl /home/shichen.wang/pl_scripts/imputation/evaluate_concordancy.pl $ORIG_VCF na.vcf na.loci.txt na.imputed.vcf  >imp_eval/imputation_eval.${i}.tsv
 
 done
-  
+
+perl -e '@fs=<imp_eval/*.tsv>; foreach $f(@fs){$cmd="sh /home/shichen.wang/pl_scripts/imputation/summarize.sh $f >${f}_AF.txt; sh /home/shichen.wang/pl_scripts/imputation/summarize_v2.sh $f"; print $cmd, "\n"; system($cmd)}'
+
+# plot imputation accuracy per allele frequency range
+ls imp_eval/*AF.txt | parallel -j 1 Rscript /home/shichen.wang/pl_scripts/plot_imputation_accuracy_AF.R {}
+
+# plot general imputation accuracy based on GP
+ls imp_eval/*sum.table.csv | parallel -j 1 Rscript /home/shichen.wang/pl_scripts/plot_imputation_accuracy_sum_table.R  

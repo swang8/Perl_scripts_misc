@@ -1,0 +1,12 @@
+CUTADAPT="cutadapt  --quiet -m 50"
+FWD="-a AGATCGGAAGAGCACACGTC -a GACGTGTGCTCTTCCGATCT -a AGATCGGAAGAGCGGTTCAG -a CTGAACCGCTCTTCCGATCT -a GATCGGAAGAGCGGTTCAGCAGGAATGCCGAG"
+REV="-a AGATCGGAAGAGCGTCGTGT -a ACACGACGCTCTTCCGATCT -a ACACTCTTTCCCTACACGACGCTCTTCCGATCT"
+
+gz=`ls ./*ADAPTER_FOUND.fastq.gz` 
+for f in $gz; 
+do
+  out=`perl -e '$f=shift; $o=$f; $o=~s/FOUND/trimmed/; print $o' $f`
+  cmd="$CUTADAPT $FWD $REV $f | gzip - >$out"
+  echo $cmd
+  #`$cmd`
+done
