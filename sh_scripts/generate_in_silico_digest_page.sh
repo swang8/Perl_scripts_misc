@@ -41,7 +41,10 @@ $ps_str
 );
 # generate a table for enzymes
 # @enz = sort{@pa=split /_/, $a; @pb=split /_/, $b; scalar @pa <=> scalar @pb or $a cmp $b}@enz;
-@enz=sort{$a cmp $b}@enz;
+
+%enz_h = map{$_, 1}@enz;
+@enz=sort{$a cmp $b}keys %enz_h;
+
 $num_per_row = 10;
 $nrow = int((scalar @enz)/$num_per_row);
 $nrow++ if (scalar @enz) % $num_per_row;
