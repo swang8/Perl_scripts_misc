@@ -79,7 +79,7 @@ sub impute_missing {
   foreach my $chr (@chrs) {
     $pm->start and next LOOP; # do the fork
     my $out = $chr . "_imputed";
-    my $cmd = "java -Xmx8G -jar $jar gtgl=$vcf out=$out  niterations=10 gprobs=true lowmem=true chrom=$chr";
+    my $cmd = "java -Xmx8G -jar $jar gl=$vcf out=$out  niterations=10 gprobs=true lowmem=true chrom=$chr";
     print STDERR $cmd, "\n";
     system($cmd);
     $pm->finish; # do the exit in the child process
