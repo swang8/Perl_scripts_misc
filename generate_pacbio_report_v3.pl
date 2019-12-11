@@ -559,13 +559,7 @@ function dl_cmd(file) {
 <body>
 <div class="container">
 <div class="row">
-      <div id="logo" class="col-xs-3">
-              <a href="http://agriliferesearch.tamu.edu/"><img src="/media/image/logo.png" alt="Texas A&amp;M AgriLife Research" class="img-responsive"/></a>
-      </div>
-
-      <div id="logo" class="col-xs-9">
-              <a href="http://txgen.tamu.edu/"><img src="/media/image/txgen_logo2.png" alt="Genomics and Bioinformatics Services" style="width:30%;" class="img-responsive pull-right"/></a>
-      </div>
+<img src="/media/image/txgen_web_banner.png" width="100%" class="img-fluid">
 </div>
 <hr>
 <h2>Project: $p</h2>

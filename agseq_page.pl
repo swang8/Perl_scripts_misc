@@ -244,6 +244,11 @@ print qq(
 <a href="sample_missing.txt.pdf"><img src="sample_missing.txt.jpeg" class="img-fluid img-thumbnail"></a>
 </div>
 </div>
+
+<h3>Table 2. Alignment summary</h3>
+<div class="row col-md-12" style="height: 500px; overflow-y: scroll;">
+</div>
+
 <h2>Imputation </h2>
 Imputation was performed using Beagle V4.0 with default parameters. The produced Genotype Probability (GP) may be used as a filtering criteria for selecting high quality imputed genotypes.
 <br>Please refer to the imputation evaluation figures to choose the best GP cutoff. By default we perform filtering with GP >= 0.9.
