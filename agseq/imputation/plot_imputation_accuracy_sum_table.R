@@ -52,7 +52,7 @@ geno_percent_file="GP_cutoff_remain.txt"
 if (!file.exists(geno_percent_file)){
   p = ggplot(data = data, aes(GP, Accuracy)) + 
     geom_bar(stat="identity", fill="salmon") + ggtitle("Imputation accuracy") +
-    coord_cartesian(ylim=c(min(data["Accuracy"])-0.05, 1)) +
+    coord_cartesian(ylim=c(min(data["Accuracy"])-0.1, 1)) +
     scale_x_continuous("Genotype probability cutoff", breaks = data$GP ) + 
     theme(axis.text=element_text(size=18),axis.title=element_text(size=20,face="bold"), plot.title = element_text(size=25, face="bold", hjust = 0.5))
 } else {
@@ -60,13 +60,13 @@ if (!file.exists(geno_percent_file)){
   newd = subset(data, select=c("GP", "Accuracy"))
   newd["remain"] = geno_remain$V2
   print(newd)
-  p <- ggplot(newd, aes(x = GP)) + coord_cartesian(ylim=c(min(newd["Accuracy"])-0.05, 1)) + ggtitle("Imputation accuracy")
+  p <- ggplot(newd, aes(x = GP)) + coord_cartesian(ylim=c(min(newd["Accuracy"])-0.1, 1)) + ggtitle("Imputation accuracy")
   p <- p + geom_bar(aes(y=Accuracy), stat="identity", fill="salmon")
-  p <- p + geom_line(aes(y = remain), color="slateblue") + geom_point(aes(y = remain),color="slateblue")
+  p <- p + geom_line(aes(y = remain, color="slateblue")) + geom_point(aes(y = remain,color="slateblue"))
 
   p <- p + scale_y_continuous(sec.axis = sec_axis(~.*1, name = "Genotyped ratio"))
-  
-  p <- p + theme(legend.position = c(0.1, 0.9)) +
+  p <- p + scale_colour_manual(values = c("slateblue")) + guides(fill = guide_legend())
+  p <- p + theme(legend.position = "top right") +
        scale_x_continuous("Genotype probability cutoff", breaks = data$GP ) +
        theme(axis.text=element_text(size=18),axis.title=element_text(size=20,face="bold"), plot.title = element_text(size=25, face="bold", hjust = 0.5))
 }

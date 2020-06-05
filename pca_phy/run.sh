@@ -40,7 +40,7 @@ echo `date` " **** adding group info to the sample name ..."
 cp ${groups_dat} ${groups_dat}.original
 perl -ne 'chomp; @t=split /\t/,$_; print $t[0]."_".$t[1], "\t", $t[1], "\n"' ${groups_dat}.original >${groups_dat}
 cp $phy_file ${phy_file}.original
-perl -e '$group = shift; $tree=shift; open(G, $group) or die; while(<G>){chomp; @t=split /\t/, $_; $h{$t[0]} = $t[0]."_".$t[1];} close G; $r = `cat $tree`;  @p=split /,/, $r;  foreach $str (@p){$str=~s/^\(+//; @arr=split /:/, $str; $id=$arr[0]; if(exists $h{$id}){$r=~s/$id/$h{$id}/}} print $r' ${groups_dat}.original  ${phy_file}.original >$phy_file
+perl -e '$group = shift; $tree=shift; open(G, $group) or die; while(<G>){chomp; @t=split /\t/, $_; $h{$t[0]} = $t[0]."_".$t[1];} close G; $r = `cat $tree`;  @p=split /,/, $r;  foreach $str (@p){$str=~s/^\(+//; @arr=split /:/, $str; $id=$arr[0]; if(exists $h{$id}){$r=~s/$id:/$h{$id}:/}} print $r' ${groups_dat}.original  ${phy_file}.original >$phy_file
 
 
 # run PCA.R

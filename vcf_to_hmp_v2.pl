@@ -1,10 +1,16 @@
 #!/usr/bin/perl -w
 use strict;
 
-my $hmp_file = shift or die "perl $0 vcf_file\n";
+my $vcf_file = shift or die "perl $0 vcf_file\n";
 my @arr;
-open(IN, $hmp_file) or die $!;
-while(<IN>){
+my $IN;
+if ($vcf_file=~/\.gz$/){
+    open($IN, "zcat $vcf_file |") or die $!;
+}
+else{
+    open($IN, $vcf_file) or die $!;
+}
+while(<$IN>){
 	chomp;
 	my @t = split /\s+/, $_;
 	if(/^\#CHROM/){
@@ -27,4 +33,4 @@ while(<IN>){
         my $rs = join("_", @t[0,1]) ;
 	print join("\t", ($rs, join("/", @t[3,4]), @t[0,1], "NA", "NA", "NA", "NA", "NA", "NA", "NA", @gn)), "\n";
 }
-close IN;
+close $IN;

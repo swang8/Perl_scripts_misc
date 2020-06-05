@@ -7,6 +7,7 @@ set -o pipefail
 #module load blast
 #module load seqtk
 seqtk=/opt/seqtk/1.3-r106/bin/seqtk
+blast=/opt/blast/2.10.0/bin/blastn
 #set -x
 
 SAMPLE_SIZE=10000
@@ -31,7 +32,7 @@ for i in $* ; do
     # only blast a poriton 
     # seqtk sample -s${SEED} "$i" $SAMPLE_SIZE  >${i}_rand${SAMPLE_SIZE}.fq 
     perl -e '$s=shift; $f=shift; open(IN, "zcat $f |"); $line=0;  while(<IN>){$line++; print $_; exit if $line == $s*4}' ${SAMPLE_SIZE} ${i} >${i}_rand${SAMPLE_SIZE}.fq
-    seqtk seq -A  ${i}_rand${SAMPLE_SIZE}.fq | blastn -db nt -num_threads 10 -evalue 1e-3 -num_alignments 1  -outfmt '6 qseqid stitle qcovs'  > ${i}_rand${SAMPLE_SIZE}.blast.out
+    seqtk seq -A  ${i}_rand${SAMPLE_SIZE}.fq | $blastn -db nt -taxids 2 -num_threads 10 -evalue 1e-3 -num_alignments 1  -outfmt '6 qseqid stitle qcovs'  > ${i}_rand${SAMPLE_SIZE}.blast.out
     
     # all reads
     #seqtk seq -A $i | blastn -db nt -num_threads 10 -num_alignments 1 -outfmt '6 qseqid stitle qcovs'  > ${i}_blast.out
