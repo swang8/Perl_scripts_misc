@@ -1,0 +1,155 @@
+#!/usr/bin/env nextflow
+params.reads = "./fastq/*_R{1,2}_001.fastq.gz"
+params.ref = "ref.fa"
+params.samtools = "samtools"
+params.picard = "picard.jar"
+params.trimmomatic = "trimmomatic.jar"
+params.dragen = "dragen"
+params.results = "results"
+
+
+Channel
+  .fromFilePairs(params.reads)
+  .ifEmpty{error "cannot find any reads matching ${parames.reads}"}
+  .set{read_paris_ch}
+
+DRAGEN=params.dragen
+
+/**** Part 2: prepare reference genome ****/
+
+process 1A_buildIndex {
+  input:
+  path ref from params.ref
+
+  output:
+  path "genome_dir" into genome_dir_ch
+
+  """
+  mkdir genome_dir
+
+  dragen --build-hash-table true --ht-reference ${ref}  --output-directory genome_dir
+
+  """
+}
+
+process 1B_prepare_ref_samtools {
+  input:
+  path ref from params.ref
+
+  output:
+  path "${ref}.fai" into index_ch
+
+  """
+  params.samtools faidx ${ref}
+  """
+}
+
+process '1C_prepare_genome_picard' {
+  tag "$genome.baseName"
+  label 'mem_xlarge'
+
+  input:
+    path ref from params.ref
+
+  output:
+    path "${ref}.dict" into genome_dict_ch
+
+  script:
+  """
+  PICARD=params.picard
+  java -jar \$PICARD CreateSequenceDictionary R=$genome O=${genome}.dict
+  """
+}
+
+/*
+* END Part 2
+*/
+
+/**** Part 3: QC reads ****/
+process qc {
+  input:
+  tuple val(sample_id), path(reads) read_pairs_ch
+
+  output:
+  set sample_id, 'QC/${sample_id}_{F,R}.fq.gz'  into qc_ch
+
+  """
+  mkdir QC
+  java -jar params.trimmomatic PE -threads ${task.cpus} $reads QC/${sample_id}_F.fq.gz  QC/${sample_id}_UF.fq.gz QC/${sample_id}_R.fq.gz QC/${sample_id}_UR.fq.gz ILLUMINACLIP:TruSeq3-PE.fa:2:30:10 LEADING:3 TRAILING:3 SLIDINGWINDOW:4:15 MINLEN:36
+  """
+}
+
+/* END Part 3 */
+
+/**** Part 4 Alignment ****/
+process aign {
+  input: 
+  path genome_dir from genome_dir_ch
+  tuple val(sample_id), path(reads) from qc_ch
+
+  output:
+  set sample_id, 'align/${sample_id}.bam' into bam_ch
+  
+  """
+  mkdir align
+
+  /* dragen -r rice_ref2 --output-directory align --output-file-prefix $id -1 $r1 -2 $r2 --remove-duplicates --RGID $id --RGSM $id */
+   
+  dragen -r ${genome_dir} \
+         --output-directory align \
+         --output-file-prefix ${sample_id} \
+         -1 ${reads[0]} -2 ${reads[1]} \
+         --remove-duplicates \
+         --RGID $id \
+         --RGSM $id
+  
+  """
+}
+
+/**** END part 4 ****/
+
+/* Part 5: generate GCVF */
+
+process gvcf {
+  input: 
+  tuple val(sample_id), path(reads) from qc_ch
+  path genome_dir from genome_dir_ch  
+
+  output:
+  path "gvcf/${sample_id}.gvcf" into gvcf_ch
+
+# generate gvcf for each sample
+perl -e  '@fs=<18334Tho_N19003/*R1_*gz>; map{$id=$1 if /N19003\/(\S+)_L00/; $cmd="dragen -r rice_ref2 --output-directory variations --output-file-prefix $id -b alignments/${id}.bam --enable-variant-caller true --vc-emit-ref-confidence GVCF  "; print $cmd, "\n"; system($cmd) }@fs;'
+  """
+  mkdir gvcf
+
+  dragen -r ${genome_dir} --output-directory gvcf --output-file-prefix ${sample_id} -b align/${sample_id}.bam --enable-variant-caller true --vc-emit-ref-confidence GVCF 
+
+  """
+}
+
+/* END part 5 */
+
+/**** Part 6: joint call variations ****/
+bams = processed_ch.map{it + " "}
+process call_var {
+  input:
+  path gvcfs from gvcf_ch
+  path genome_dir from genome_dir_ch 
+
+  output:
+  path 'joint/All*'  into var_ch
+
+/* perl -e '@fs=<variations/*gvcf.gz>; @arr=map{"--variant $_"}@fs; $cmd="dragen --enable-joint-genotyping true -r rice_ref2 --output-file-prefix All --output-directory joint " . join(" ", @arr); print $cmd, "\n"; system($cmd) '  */
+
+  """
+  mkdir joint
+
+  call_cmd=$(perl -e '$dir=shift; @fs=@ARGV; @arr=map{"--variant $_"}@fs; $cmd="dragen --enable-joint-genotyping true -r $dir --output-file-prefix All --output-directory joint " . join(" ", @arr); print $cmd, "\n"; ' ${genome_dir} ${gvcfs})
+  
+  ${call_cmd}  
+
+  """
+}
+
+/* END part 5 */

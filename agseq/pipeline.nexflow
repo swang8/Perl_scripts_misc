@@ -1,0 +1,144 @@
+#!/usr/bin/env nextflow
+params.reads = "./fastq/*_R{1,2}_001.fastq.gz"
+params.alnpl = "aling.pl"
+params.callpl = "haplotypecaller.pl"
+params.ref = "ref.fa"
+params.samtools = "samtools"
+params.picard = "picard.jar"
+params.trimmomatic="trimmomatic.jar"
+
+Channel
+  .fromFilePairs(params.reads)
+  .ifEmpty{error "cannot find any reads matching ${parames.reads}"}
+  .set{read_paris_ch}
+
+
+/**** Part 2: prepare reference genome ****/
+
+process 1A_buildIndex {
+  input:
+  path ref from params.ref
+
+  output:
+  path '${ref}.*' into index_ch
+
+  """
+  bowtie2-build --threads ${task.cpus} ${ref} ${ref}
+  """
+}
+
+process 1B_prepare_ref_samtools {
+  input:
+  path ref from params.ref
+
+  output:
+  path "${ref}.fai" into index_ch
+
+  """
+  params.samtools faidx ${ref}
+  """
+}
+
+process '1C_prepare_genome_picard' {
+  tag "$genome.baseName"
+  label 'mem_xlarge'
+
+  input:
+    path ref from params.ref
+
+  output:
+    path "${ref}.dict" into genome_dict_ch
+
+  script:
+  """
+  PICARD=params.picard
+  java -jar \$PICARD CreateSequenceDictionary R= $genome O= ${genome.baseName}.dict
+  """
+}
+
+/*
+* END Part 2
+*/
+
+/**** Part 3: QC reads ****/
+/* my $cmd="java -jar $Bin/Trimmomatic-0.39/trimmomatic-0.39.jar PE -threads 4 $f $f2 $qc_folder/${acc}_F.fq.g    z  $qc_folder/${acc}_FU.fq.gz $qc_folder/${acc}_R.fq.gz $qc_folder/${acc}_RU.fq.gz ILLUMINACLIP:\$EBROOTTRIMMOM    ATIC/adapters/TruSeq3-PE.fa:2:30:10 LEADING:3 TRAILING:3 SLIDINGWINDOW:4:15 MINLEN:36"; 
+*/
+process qc {
+  input:
+  tuple val(sample_id), path(reads) read_pairs_ch
+
+  output:
+  set sample_id, '${sample_id}_{F,R}.fq.gz'  into qc_ch
+
+  """
+  java -jar params.trimmomatic PE -threads ${task.cpus} $reads ${sample_id}_F.fq.gz  ${sample_id}_UF.fq.gz ${sample_id}_R.fq.gz ${sample_id}_UR.fq.gz ILLUMINACLIP:TruSeq3-PE.fa:2:30:10 LEADING:3 TRAILING:3 SLIDINGWINDOW:4:15 MINLEN:36
+  """
+}
+
+/* END Part 3 */
+
+/**** Part 4 Alignment ****/
+/*  perl $0
+*  -acc       Accession name
+*  -reads     provide pairend reads (separate with comma) and/or single-end reads:  R1.fq,R2.fq  and/or single.fq
+*  -ref       reference in fasta format
+*  -refindex  bowtie2 index basename
+*  -outdir    The directory for output
+*  -MAQ       mapping quality cutoff, default is 0
+*  -CPU       number of CPUs that will be used to run bowtie2
+*  -bowtie2   The path to executable bowtie2: ie, /home/DNA/Tools/bowtie2/bin/bowtie2
+*  );
+* 
+*/
+process aign {
+  input: 
+  path genome from params.ref
+  path alnpl from params.alnpl
+  tuple val(sample_id), path(reads) from qc_ch
+
+  output:
+  set sample_id, '${sample_id}.sam' into sam_ch
+  
+  """
+  perl ${alnpl} -acc ${sample_id} -reads ${reads} -ref ${genome} -refindex ${genome} -outdir Align -CPU ${task.cpus}
+  """
+}
+
+/**** END part 4 ****/
+
+
+/***** Part 5: processing ****/
+process process {
+  input:
+  path genome from params.ref
+  path alnpl from params.alnpl
+  tuple val(sample_id), path(reads) from qc_ch
+
+  output:
+  set sample_id, '${sample_id}_sorted_addRG_rmDup_realigned_QC.bam' into processed_ch
+
+  """
+  perl /data4/.shichen/agseq_pipeline/process_v2.pl  -acc ${sample_id} -reads ${reads} -ref ${genome} -refindex ${genome} -outdir Align -CPU ${task.cpus}
+  """
+}
+
+/* END part 5 */
+
+
+/**** Part 6: call variations ****/
+bams = processed_ch.map{it + " "}
+process call_var {
+  input:
+  path genome from params.ref
+  path callpl from params.callpl
+  val bams from bams  
+
+  output:
+  path 'All*'  into var_ch
+
+  """
+  perl $callpl -ref ${genome}  -out_prefix Variations/All -bam ${bams}
+  """
+}
+
+/* END part 6 */

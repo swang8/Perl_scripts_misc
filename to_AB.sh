@@ -8,7 +8,15 @@ if($n <= $r){$snp{$t[0]}=1}
 else{
   $m++;
   if($m==1){
-     map{if($t[$_] eq "ANTR1P_3" or $t[$_] eq "ANTR1P_2" or $t[$_] eq "ANTR1P_1"){push @arr1, $_} if($t[$_] eq "ANTR1P_5" or $t[$_] eq "ANTR1P_6"){push @arr2, $_} }1..$#t;
+     map{
+     ## input parent names here
+     ## Parent 1
+     if($t[$_] eq "TAM113" or $t[$_] eq "TAM113_2" ){push @arr1, $_} 
+
+     ## Parent 2
+     if($t[$_] eq "Gallagher" or $t[$_] eq "Gallagher_2"){push @arr2, $_} 
+
+     }1..$#t;
      print $_, "\n"; next}
    #next unless exists $snp{$t[0]};
    @par1=@t[@arr1]; @par2=@t[@arr2];
