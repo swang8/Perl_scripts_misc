@@ -21,9 +21,10 @@ foreach my $id (keys %snp_pos)
 		my $start = $pos>$flank_len?$pos-$flank_len:0;		
 		my $end = ($length - $pos)>=$flank_len?$pos+$flank_len:$length;
         next if $start > $end;
+        #print STDERR $pos, "\t", $start, "\t", $end, "\n";
 		my $subseq = $obj->subseq($start => $end);
         my $snp_pos = $pos>$flank_len?$flank_len:($pos-1);
-        substr($subseq, $snp_pos) = $str;
+        substr($subseq, $snp_pos,1) = $str;
 		print OL ">", join(":", ($id, $pos, $length)),"\n", $subseq,"\n";
 		
 	}
@@ -41,7 +42,7 @@ sub read_snp_file
 		next if /^\#/;
 		s/^>//;
 		my @t=split /\s+/,$_;
-		push @{$return{$t[0]}}, [$t[1], join("/", @t[3,4]) ];
+		push @{$return{$t[0]}}, [$t[1], "[".join("/", @t[3,4])."]" ];
 	}
 	close IN;
 	return %return;
