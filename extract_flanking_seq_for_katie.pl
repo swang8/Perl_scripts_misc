@@ -4,6 +4,7 @@ use Bio::DB::Fasta;
 
 die "perl $0 <SNP position file,vcf > <contig fasta> <flanking length> <output file>\n" unless @ARGV >= 3;
 ## SNP postion file format
+## CHROM POS ID REF ALT
 
 my ($snp_file, $ctg_fasta_file, $flank_len, $oligo_file) = @ARGV;
 open (OL, ">$oligo_file") or die $!;
